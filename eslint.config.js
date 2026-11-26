@@ -21,7 +21,7 @@ export default [
     },
   },
   {
-    // Page du dashboard : code exécuté dans le navigateur
+    // Dashboard page: code running in the browser
     files: ['dashboard/public/**/*.js'],
     languageOptions: { globals: { ...globals.browser } },
   },

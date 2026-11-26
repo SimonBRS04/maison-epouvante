@@ -1,20 +1,20 @@
 #!/usr/bin/env node
 /**
- * Crée et règle le dépôt GitHub de l'équipe sur le compte de la personne connectée
- * (à lancer UNE fois, depuis la racine du projet).
+ * Creates and configures the team repository on the account of the logged-in user
+ * (run ONCE, from the project root).
  *
- * Prérequis :
- *   1. `gh auth login` fait ;
- *   2. le dossier est un dépôt git avec au moins un commit sur main.
+ * Prerequisites:
+ *   1. `gh auth login` done;
+ *   2. the folder is a git repository with at least one commit on main.
  *
- * Usage :
- *   node scripts/github/setup.mjs --dry-run      affiche les commandes sans rien faire
- *   node scripts/github/setup.mjs                exécute
- *   node scripts/github/setup.mjs --collaborateurs pseudo1,pseudo2,pseudo3
- *                                                invite les membres (accès complet au dépôt)
+ * Usage:
+ *   node scripts/github/setup.mjs --dry-run      print the commands without running them
+ *   node scripts/github/setup.mjs                run
+ *   node scripts/github/setup.mjs --collaborateurs login1,login2,login3
+ *                                                invite the members (full access to the repository)
  *
- * Option : --repo <nom> (défaut maison-epouvante).
- * Relançable sans risque : chaque étape vérifie si elle est déjà faite.
+ * Option: --repo <name> (default maison-epouvante).
+ * Safe to re-run: each step checks whether it is already done.
  */
 import { execFileSync } from 'node:child_process';
 import { fileURLToPath } from 'node:url';
@@ -44,11 +44,11 @@ const LABELS = [
 
 // ---------------------------------------------------------------------------
 
-/** Lance une commande ; en mode --dry-run, l'affiche seulement. */
+/** Runs a command; in --dry-run mode, only prints it. */
 function run(command, commandArgs, { allowFailure = false, quiet = false } = {}) {
   const printable = [command, ...commandArgs].join(' ');
   if (DRY_RUN) {
-    console.log(`  [à blanc] ${printable}`);
+    console.log(`  [dry run] ${printable}`);
     return '';
   }
   try {
@@ -58,12 +58,12 @@ function run(command, commandArgs, { allowFailure = false, quiet = false } = {})
     }).trim();
   } catch (error) {
     if (allowFailure) return null;
-    console.error(`\n✗ Échec : ${printable}\n${error.stderr ?? error.message}`);
+    console.error(`\n✗ Failed: ${printable}\n${error.stderr ?? error.message}`);
     process.exit(1);
   }
 }
 
-/** Vrai si la commande réussit (sert à tester l'existence d'une ressource). */
+/** True when the command succeeds (used to check whether a resource exists). */
 function succeeds(command, commandArgs) {
   if (DRY_RUN) return false;
   return run(command, commandArgs, { allowFailure: true, quiet: true }) !== null;
@@ -75,15 +75,15 @@ function step(title) {
 
 // ---------------------------------------------------------------------------
 
-step('Vérification de la connexion GitHub');
+step('Checking the GitHub login');
 run('gh', ['auth', 'status']);
 const me = DRY_RUN ? '<toi>' : run('gh', ['api', 'user', '--jq', '.login']);
 const REPO = `${me}/${args.repo}`;
-console.log(`  connecté en tant que ${me}`);
+console.log(`  logged in as ${me}`);
 
-step(`Dépôt ${REPO}`);
+step(`Repository ${REPO}`);
 if (succeeds('gh', ['repo', 'view', REPO])) {
-  console.log('  existe déjà : publication de main');
+  console.log('  already exists: pushing main');
   run('git', ['push', '-u', 'origin', 'main']);
 } else {
   run('gh', [
@@ -101,7 +101,7 @@ if (succeeds('gh', ['repo', 'view', REPO])) {
   ]);
 }
 
-step('Réglages du dépôt (squash uniquement, suppression des branches fusionnées)');
+step('Repository settings (squash only, merged branches deleted)');
 run('gh', [
   'repo',
   'edit',
@@ -124,7 +124,7 @@ run('gh', [
   'squash_merge_commit_message=PR_BODY',
 ]);
 
-step('Sécurité : détection des secrets, protection des push, alertes de dépendances');
+step('Security: secret scanning, push protection, dependency alerts');
 run(
   'gh',
   [
@@ -141,7 +141,7 @@ run(
 );
 run('gh', ['api', '-X', 'PUT', `repos/${REPO}/vulnerability-alerts`], { allowFailure: true });
 
-step('Étiquettes');
+step('Labels');
 for (const [name, color, description] of LABELS) {
   run('gh', [
     'label',
@@ -157,7 +157,7 @@ for (const [name, color, description] of LABELS) {
   ]);
 }
 
-step('Protection de la branche main');
+step('Protection of the main branch');
 run('gh', [
   'api',
   '-X',
@@ -166,18 +166,18 @@ run('gh', [
   '--input',
   PROTECTION_FILE,
 ]);
-console.log('  PR obligatoire, 1 approbation, contrôle « qualite » vert, historique linéaire');
+console.log('  pull request required, 1 approval, green "qualite" check, linear history');
 
 if (args.collaborateurs) {
-  step('Invitation des collaborateurs (accès complet au dépôt)');
+  step('Inviting collaborators (full access to the repository)');
   const logins = args.collaborateurs
     .split(',')
     .map((login) => login.trim())
     .filter(Boolean);
   for (const login of logins) {
     run('gh', ['api', '-X', 'PUT', `repos/${REPO}/collaborators/${login}`]);
-    console.log(`  ${login} invité (invitation à accepter, reçue par e-mail)`);
+    console.log(`  ${login} invited (invitation sent by e-mail, to be accepted)`);
   }
 }
 
-console.log(`\n✓ Terminé : https://github.com/${REPO}\n`);
+console.log(`\n✓ Done: https://github.com/${REPO}\n`);

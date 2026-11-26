@@ -6,11 +6,11 @@ const publisher = await createPublisher();
 
 const server = createApp({ publisher }).listen(port, () => {
   console.log(
-    `[troc] à l'écoute sur le port ${port} (SSO=${process.env.SSO ?? 'none'}, BROKER=${process.env.BROKER ?? 'memory'})`,
+    `[troc] listening on port ${port} (SSO=${process.env.SSO ?? 'none'}, BROKER=${process.env.BROKER ?? 'memory'})`,
   );
 });
 
-// Arrêt propre : fermer la connexion au broker avant de quitter.
+// Graceful shutdown: close the broker connection before exiting.
 for (const signal of ['SIGINT', 'SIGTERM']) {
   process.on(signal, () => server.close(() => publisher.close().finally(() => process.exit(0))));
 }

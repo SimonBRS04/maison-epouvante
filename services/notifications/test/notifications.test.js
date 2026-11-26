@@ -15,7 +15,7 @@ beforeEach(() => {
 });
 
 describe('GET /notifications', () => {
-  it('un membre ne voit que ses notifications', async () => {
+  it('a member only sees their own notifications', async () => {
     const res = await request(app)
       .get('/notifications?membreId=m-002')
       .set('X-Dev-User', 'm-001')
@@ -24,19 +24,19 @@ describe('GET /notifications', () => {
     expect(res.body.map((n) => n.membreId)).toEqual(['m-001']);
   });
 
-  it('un modérateur voit tout', async () => {
+  it('a moderator sees everything', async () => {
     const res = await request(app).get('/notifications');
     expect(res.body).toHaveLength(2);
   });
 
-  it('un modérateur peut filtrer par membre', async () => {
+  it('a moderator can filter by member', async () => {
     const res = await request(app).get('/notifications?membreId=m-002');
     expect(res.body.map((n) => n.membreId)).toEqual(['m-002']);
   });
 });
 
 describe('GET /health', () => {
-  it('répond au format du socle', async () => {
+  it('answers in the shared health format', async () => {
     const res = await request(app).get('/health');
     expect(res.body).toEqual({ status: 'ok', service: 'notifications', version: '0.1.0' });
   });

@@ -35,27 +35,27 @@ beforeEach(() => {
 });
 
 describe('GET /offers', () => {
-  it('liste toutes les offres', async () => {
+  it('lists every offer', async () => {
     const res = await request(app).get('/offers');
     expect(res.status).toBe(200);
     expect(res.body).toHaveLength(2);
   });
 
-  it('filtre par catégorie', async () => {
+  it('filters by category', async () => {
     const res = await request(app).get('/offers?categorie=fanzine');
     expect(res.body.map((o) => o.id)).toEqual(['o-0002']);
   });
 });
 
 describe('GET /offers/:id', () => {
-  it('répond 404 pour une offre inconnue', async () => {
+  it('returns 404 for an unknown offer', async () => {
     const res = await request(app).get('/offers/o-9999');
     expect(res.status).toBe(404);
   });
 });
 
 describe('POST /offers', () => {
-  it('crée l’offre au nom du membre connecté et publie offer.created', async () => {
+  it('creates the offer on behalf of the logged-in member and publishes offer.created', async () => {
     const res = await request(app).post('/offers').set('X-Dev-User', 'm-042').send(newOffer);
 
     expect(res.status).toBe(201);
@@ -71,7 +71,7 @@ describe('POST /offers', () => {
     });
   });
 
-  it('ignore un membreId envoyé dans le corps', async () => {
+  it('ignores a membreId sent in the body', async () => {
     const res = await request(app)
       .post('/offers')
       .set('X-Dev-User', 'm-042')
@@ -79,7 +79,7 @@ describe('POST /offers', () => {
     expect(res.body.membreId).toBe('m-042');
   });
 
-  it('répond 400 pour un type inconnu', async () => {
+  it('returns 400 for an unknown type', async () => {
     const res = await request(app)
       .post('/offers')
       .send({ ...newOffer, type: 'vente' });
@@ -87,12 +87,12 @@ describe('POST /offers', () => {
     expect(res.body.erreur.code).toBe('VALIDATION');
   });
 
-  it('répond 403 sans le rôle membre', async () => {
+  it('returns 403 without the membre role', async () => {
     const res = await request(app).post('/offers').set('X-Dev-Roles', 'visiteur').send(newOffer);
     expect(res.status).toBe(403);
   });
 
-  it('répond 503 et ne garde pas l’offre si la publication échoue', async () => {
+  it('returns 503 and drops the offer when publishing fails', async () => {
     publisher.publish.mockRejectedValueOnce(new Error('broker injoignable'));
     vi.spyOn(console, 'error').mockImplementation(() => {});
 
@@ -105,7 +105,7 @@ describe('POST /offers', () => {
 });
 
 describe('GET /health', () => {
-  it('répond au format du socle', async () => {
+  it('answers in the shared health format', async () => {
     const res = await request(app).get('/health');
     expect(res.body).toEqual({ status: 'ok', service: 'troc', version: '0.1.0' });
   });

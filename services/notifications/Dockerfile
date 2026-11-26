@@ -1,16 +1,16 @@
-# Service notifications — à construire depuis la racine du dépôt (monorepo) :
+# notifications service — build from the repository root (monorepo):
 #   docker build -f services/notifications/Dockerfile -t maison-epouvante-notifications .
 FROM node:22-alpine
 
 WORKDIR /app
 ENV NODE_ENV=production
 
-# Copie du monorepo (filtré par .dockerignore), puis installation des seules dépendances de production du service
+# Copy the monorepo (filtered by .dockerignore), then install only this service's production dependencies
 COPY . .
 RUN npm ci --omit=dev --workspace services/notifications --include-workspace-root=false \
   && npm cache clean --force
 
-# Jamais root dans le conteneur
+# Never run as root inside the container
 USER node
 
 ENV PORT=3003

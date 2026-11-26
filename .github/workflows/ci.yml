@@ -1,10 +1,10 @@
-# Pipeline GitHub Actions — propriétaire : Lot 2.
+# GitHub Actions pipeline — owner: Lot 2.
 #
-# SQUELETTE : 3 étapes sur les 10 prévues (voir docs/lots/lot-2-cicd.md).
-# Le Lot 2 ajoute les autres étapes dans ce même job, avec les noms exacts de son fichier.
+# SKELETON: 3 of the 10 planned steps (see docs/lots/lot-2-cicd.md).
+# Lot 2 adds the other steps to this same job, using the exact names from its file.
 #
-# IMPORTANT : le job doit garder le nom « qualite ». La protection de la branche main
-# exige ce contrôle avant toute fusion ; le renommer bloquerait toutes les PR.
+# IMPORTANT: the job must keep the name "qualite". The main branch protection requires
+# this check before any merge; renaming it would block every pull request.
 
 name: ci
 

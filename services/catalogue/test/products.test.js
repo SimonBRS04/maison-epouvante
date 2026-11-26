@@ -31,26 +31,26 @@ beforeEach(() => {
 });
 
 describe('GET /products', () => {
-  it('liste tous les produits', async () => {
+  it('lists every product', async () => {
     const res = await request(app).get('/products');
     expect(res.status).toBe(200);
     expect(res.body).toHaveLength(2);
   });
 
-  it('filtre par catégorie', async () => {
+  it('filters by category', async () => {
     const res = await request(app).get('/products?categorie=blu-ray');
     expect(res.body.map((p) => p.id)).toEqual(['p-002']);
   });
 });
 
 describe('GET /products/:id', () => {
-  it('renvoie le produit', async () => {
+  it('returns the product', async () => {
     const res = await request(app).get('/products/p-001');
     expect(res.status).toBe(200);
     expect(res.body.nom).toBe('Figurine');
   });
 
-  it('répond 404 pour un produit inconnu', async () => {
+  it('returns 404 for an unknown product', async () => {
     const res = await request(app).get('/products/p-999');
     expect(res.status).toBe(404);
     expect(res.body.erreur.code).toBe('INTROUVABLE');
@@ -58,18 +58,18 @@ describe('GET /products/:id', () => {
 });
 
 describe('POST /products', () => {
-  it('crée un produit pour un modérateur', async () => {
+  it('creates a product for a moderator', async () => {
     const res = await request(app).post('/products').send(newProduct);
     expect(res.status).toBe(201);
     expect(res.body).toMatchObject({ id: 'p-003', ...newProduct, exclusifEnLigne: false });
   });
 
-  it('répond 403 pour un simple membre', async () => {
+  it('returns 403 for a plain member', async () => {
     const res = await request(app).post('/products').set('X-Dev-Roles', 'membre').send(newProduct);
     expect(res.status).toBe(403);
   });
 
-  it('répond 400 si le prix n’est pas un entier en centimes', async () => {
+  it('returns 400 when the price is not an integer amount of cents', async () => {
     const res = await request(app)
       .post('/products')
       .send({ ...newProduct, prix: 12.9 });
@@ -77,7 +77,7 @@ describe('POST /products', () => {
     expect(res.body.erreur.code).toBe('VALIDATION');
   });
 
-  it('répond 400 sur un JSON mal formé', async () => {
+  it('returns 400 on malformed JSON', async () => {
     const res = await request(app)
       .post('/products')
       .set('Content-Type', 'application/json')
@@ -88,19 +88,19 @@ describe('POST /products', () => {
 });
 
 describe('DELETE /products/:id', () => {
-  it('retire un produit', async () => {
+  it('removes a product', async () => {
     const res = await request(app).delete('/products/p-001');
     expect(res.status).toBe(204);
     expect((await request(app).get('/products/p-001')).status).toBe(404);
   });
 
-  it('répond 404 pour un produit inconnu', async () => {
+  it('returns 404 for an unknown product', async () => {
     expect((await request(app).delete('/products/p-999')).status).toBe(404);
   });
 });
 
 describe('GET /health', () => {
-  it('répond au format du socle', async () => {
+  it('answers in the shared health format', async () => {
     const res = await request(app).get('/health');
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ status: 'ok', service: 'catalogue', version: '0.1.0' });

@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 
 export const OFFER_TOPIC = 'offers';
 
-/** Construit l'événement offer.created au format du socle commun (§6). */
+/** Builds the offer.created event in the shared format (socle commun, section 6). */
 export function offerCreatedEvent(offer) {
   return {
     id: randomUUID(),

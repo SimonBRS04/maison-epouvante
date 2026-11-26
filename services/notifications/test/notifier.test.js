@@ -12,14 +12,14 @@ const event = {
 };
 
 describe('createNotifier', () => {
-  it('prévient les membres intéressés, sauf l’auteur de l’offre', () => {
+  it('notifies interested members, except the author of the offer', () => {
     const store = createNotificationStore();
     const created = createNotifier({ store, interests }).handle(event);
     expect(created.map((n) => n.membreId)).toEqual(['m-002']);
     expect(created[0]).toMatchObject({ offerId: 'o-0010', categorie: 'figurines', lue: false });
   });
 
-  it('ignore un événement déjà traité (idempotence)', () => {
+  it('ignores an already processed event (idempotence)', () => {
     const store = createNotificationStore();
     const notifier = createNotifier({ store, interests });
     notifier.handle(event);
@@ -27,7 +27,7 @@ describe('createNotifier', () => {
     expect(store.list()).toHaveLength(1);
   });
 
-  it('ignore les autres types d’événements', () => {
+  it('ignores other event types', () => {
     const store = createNotificationStore();
     expect(
       createNotifier({ store, interests }).handle({ ...event, type: 'offer.deleted' }),

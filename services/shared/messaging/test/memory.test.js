@@ -5,22 +5,22 @@ const event = { id: 'e-1', type: 'offer.created', membreId: 'm-1', payload: { ca
 
 afterEach(() => resetMemoryBus());
 
-describe('validation des options', () => {
-  it('refuse un broker inconnu', async () => {
-    await expect(createPublisher({ broker: 'zeromq' })).rejects.toThrow(/inconnu/);
+describe('option validation', () => {
+  it('rejects an unknown broker', async () => {
+    await expect(createPublisher({ broker: 'zeromq' })).rejects.toThrow(/Unknown BROKER/);
   });
 
-  it('exige un groupe pour consommer', async () => {
+  it('requires a group to consume', async () => {
     await expect(createSubscriber({ broker: 'memory' })).rejects.toThrow(/group/);
   });
 
-  it('signale les brokers pas encore implémentés', async () => {
+  it('reports brokers not implemented yet', async () => {
     await expect(createPublisher({ broker: 'kafka' })).rejects.toThrow(/Lot 4/);
   });
 });
 
-describe('adaptateur memory', () => {
-  it('livre une copie du message à chaque groupe', async () => {
+describe('memory adapter', () => {
+  it('delivers a copy of the message to each group', async () => {
     const receivedA = vi.fn();
     const receivedB = vi.fn();
     await (await createSubscriber({ broker: 'memory', group: 'a' })).subscribe('offers', receivedA);
@@ -34,7 +34,7 @@ describe('adaptateur memory', () => {
     });
   });
 
-  it('partage les messages entre consommateurs d’un même groupe', async () => {
+  it('shares messages between consumers of the same group', async () => {
     const first = vi.fn();
     const second = vi.fn();
     await (await createSubscriber({ broker: 'memory', group: 'g' })).subscribe('offers', first);
@@ -50,11 +50,11 @@ describe('adaptateur memory', () => {
     });
   });
 
-  it('redistribue un message dont le traitement échoue', async () => {
+  it('redelivers a message whose handler fails', async () => {
     let attempts = 0;
     const handler = vi.fn(async () => {
       attempts += 1;
-      if (attempts < 3) throw new Error('échec simulé');
+      if (attempts < 3) throw new Error('simulated failure');
     });
     await (await createSubscriber({ broker: 'memory', group: 'g' })).subscribe('offers', handler);
 
@@ -63,7 +63,7 @@ describe('adaptateur memory', () => {
     await vi.waitFor(() => expect(handler).toHaveBeenCalledTimes(3));
   });
 
-  it('ne livre plus rien après close()', async () => {
+  it('delivers nothing after close()', async () => {
     const handler = vi.fn();
     const subscriber = await createSubscriber({ broker: 'memory', group: 'g' });
     await subscriber.subscribe('offers', handler);

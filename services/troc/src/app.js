@@ -6,9 +6,9 @@ import { offersRouter } from './routes/offers.js';
 import { createOfferStore } from './store.js';
 
 /**
- * Crée l'application sans la démarrer (testable avec Supertest).
+ * Builds the application without starting it (testable with Supertest).
  * @param {object} deps
- * @param {{ publish: Function }} deps.publisher Créé par createPublisher() de @maison-epouvante/messaging.
+ * @param {{ publish: Function }} deps.publisher Created by createPublisher() from @maison-epouvante/messaging.
  */
 export function createApp({ publisher, auth = createAuth(), store = createOfferStore() }) {
   const app = express();

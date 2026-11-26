@@ -1,25 +1,26 @@
 /**
- * Module d'authentification partagé — propriétaire : Lot 3.
+ * Shared authentication module — owner: Lot 3.
  *
- * Interface figée (voir docs/lots/lot-3-sso.md) :
+ * Frozen interface (see docs/lots/lot-3-sso.md):
  *   const auth = createAuth({ provider, issuer, audience, jwksUri });
  *   app.post('/route', auth.requireRole('membre'), handler);  // req.user = { id, roles, provider }
  *
- * État du squelette : seul le mode `none` est implémenté.
- * Les modes `keycloak` et `auth0` sont à implémenter par le Lot 3 (vérification avec `jose`).
+ * Skeleton status: only the `none` mode is implemented.
+ * The `keycloak` and `auth0` modes are to be implemented by Lot 3 (verification with `jose`).
+ * Error messages sent to API clients stay in French; developer-facing errors are in English.
  */
 import { createNoneVerifier } from './providers/none.js';
 
 const PROVIDERS = ['none', 'keycloak', 'auth0'];
 
 /**
- * Crée le middleware d'authentification.
+ * Creates the authentication middleware.
  * @param {object} options
  * @param {'none'|'keycloak'|'auth0'} [options.provider]
  * @param {string} [options.issuer]
  * @param {string} [options.audience]
  * @param {string} [options.jwksUri]
- * @param {string} [options.nodeEnv] Valeur de NODE_ENV (injectable pour les tests).
+ * @param {string} [options.nodeEnv] NODE_ENV value (injectable for tests).
  */
 export function createAuth({
   provider = process.env.SSO ?? 'none',
@@ -29,15 +30,15 @@ export function createAuth({
   nodeEnv = process.env.NODE_ENV,
 } = {}) {
   if (!PROVIDERS.includes(provider)) {
-    throw new Error(`SSO inconnu : "${provider}". Valeurs possibles : ${PROVIDERS.join(', ')}.`);
+    throw new Error(`Unknown SSO "${provider}". Allowed values: ${PROVIDERS.join(', ')}.`);
   }
   if (provider === 'none' && nodeEnv === 'production') {
-    throw new Error('SSO=none est interdit quand NODE_ENV=production.');
+    throw new Error('SSO=none is forbidden when NODE_ENV=production.');
   }
 
   const verifier = selectVerifier(provider, { issuer, audience, jwksUri });
 
-  /** Vérifie l'identité et place req.user ; répond 401 sinon. */
+  /** Checks the identity and sets req.user; answers 401 otherwise. */
   function requireAuth() {
     return async (req, res, next) => {
       const start = performance.now();
@@ -52,7 +53,7 @@ export function createAuth({
     };
   }
 
-  /** Comme requireAuth, puis exige le rôle demandé ; répond 403 s'il manque. */
+  /** Like requireAuth, then requires the given role; answers 403 if it is missing. */
   function requireRole(role) {
     const authenticate = requireAuth();
     return (req, res, next) =>
@@ -71,11 +72,11 @@ export function createAuth({
 
 function selectVerifier(provider, _options) {
   if (provider === 'none') return createNoneVerifier();
-  // TODO Lot 3 : implémenter la vérification JWT (jose, JWKS, issuer, audience, extraction des rôles).
-  throw new Error(`Fournisseur SSO "${provider}" : à implémenter par le Lot 3.`);
+  // TODO Lot 3: implement JWT verification (jose, JWKS, issuer, audience, role extraction).
+  throw new Error(`SSO provider "${provider}": to be implemented by Lot 3.`);
 }
 
-/** Erreur d'authentification portant le code renvoyé au client. */
+/** Authentication error carrying the code sent back to the client. */
 export class AuthError extends Error {
   constructor(code, message) {
     super(message);

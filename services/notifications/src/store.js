@@ -1,4 +1,4 @@
-/** Stockage en mémoire des notifications et des événements déjà traités. */
+/** In-memory store of notifications and of already processed events. */
 export function createNotificationStore() {
   const notifications = [];
   const processedEventIds = new Set();

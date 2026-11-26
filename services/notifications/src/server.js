@@ -15,11 +15,11 @@ await subscriber.subscribe('offers', async (event) => {
 
 const server = createApp({ store }).listen(port, () => {
   console.log(
-    `[notifications] à l'écoute sur le port ${port} (SSO=${process.env.SSO ?? 'none'}, BROKER=${process.env.BROKER ?? 'memory'})`,
+    `[notifications] listening on port ${port} (SSO=${process.env.SSO ?? 'none'}, BROKER=${process.env.BROKER ?? 'memory'})`,
   );
 });
 
-// Arrêt propre : se désabonner du broker avant de quitter.
+// Graceful shutdown: unsubscribe from the broker before exiting.
 for (const signal of ['SIGINT', 'SIGTERM']) {
   process.on(signal, () => server.close(() => subscriber.close().finally(() => process.exit(0))));
 }
