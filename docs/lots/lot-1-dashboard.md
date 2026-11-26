@@ -36,8 +36,8 @@ Le dashboard **est la démonstration**. Les 6 points de démo de la grille se jo
 
 ## Ce que tu livres
 
-- [ ] **J1 — Contrat.** `results/schema.json` (draft 2020-12) qui traduit exactement la section 8 du socle, et `npm run validate:results`. Présente-le à l'équipe en fin de journée : une fois validé, il est figé.
-- [ ] **J1 — Boîte à outils `bench-kit`.** Les 6 fonctions du socle (§7), testées. Les 3 autres lots s'en servent dès le J2 : c'est ta priorité avec le schéma.
+- [x] **J1 — Contrat.** `results/schema.json` (draft 2020-12) qui traduit exactement la section 8 du socle, et `npm run validate:results`. Présente-le à l'équipe en fin de journée : une fois validé, il est figé.
+- [x] **J1 — Boîte à outils `bench-kit`.** Les 6 fonctions du socle (§7), testées. Les 3 autres lots s'en servent dès le J2 : c'est ta priorité avec le schéma.
 - [ ] **J2 — Serveur.** `dashboard/server.js` et son API (voir plus bas), qui lit déjà les fixtures.
 - [ ] **J3 — Page, partie mesures.** Onglets, en-tête, tableau des mesures, graphiques.
 - [ ] **J4 — Page, partie scénarios et historique.** Grille des scénarios, courbe d'historique, comparaison au lancement précédent, bouton « Lancer » avec suivi en direct.
@@ -67,7 +67,7 @@ Tant que les fixtures n'existent pas, crée-en une toi-même pour `brokers` à p
 - Utilise des `enum` pour `comparatif`, `categorie`, `unite`, `meilleur`, `statut`, `technos[].id`.
 - `valeurs` et `resultats` sont des objets dont les clés sont des `id` de technos : `propertyNames` avec l'enum des technos.
 - `valeurs.<techno>` : `oneOf` entre `{ mediane, min, max }` (nombres) et `null`.
-- Place la validation dans `bench-kit` (`validateResult(json)` → `{ valide, erreurs }`). `writeResult()` et `scripts/validate-results.js` l'utilisent tous les deux : une seule source de vérité.
+- Place la validation dans `bench-kit` (`validateResult(json)` → `{ valid, errors }`). `writeResult()` et `scripts/validate-results.js` l'utilisent tous les deux : une seule source de vérité.
 - Écris un test Vitest par règle importante : un JSON valide passe, un statut inconnu est refusé, une techno inconnue est refusée…
 
 ### 2. La boîte à outils `bench-kit` (J1)
@@ -87,9 +87,9 @@ packages/bench-kit/
 ```
 
 - `percentile` : méthode du rang le plus proche, documentée dans le code. Les 3 bancs calculent ainsi leurs p95 de la même manière.
-- `measure(fn, { repetitions = 5, echauffement = 1 })` : appelle `fn` (qui renvoie un nombre), ignore les tours d'échauffement, renvoie `{ mediane, min, max }`. En `--rapide` : 1 répétition, sans échauffement.
+- `measure(fn, { repetitions = 5, warmup = 1 })` : appelle `fn` (qui renvoie un nombre), ignore les tours d'échauffement, renvoie `{ mediane, min, max }`. En `--rapide` : 1 répétition, sans échauffement.
 - `environment()` : `os.hostname()`, `os.type()` et `os.release()`, `os.cpus()[0].model`, `os.totalmem()` en Go, et le commit court via `git rev-parse --short HEAD`.
-- `writeResult(json, { officiel })` : nom de fichier tiré de `json.date` (deux-points remplacés par des tirets, sinon Windows refuse), écriture dans `.tmp` puis `fs.rename`, dossier `results/` ou `results-dev/`. Si invalide → `rejets/`, erreurs affichées, `process.exitCode = 2`. Dernière ligne affichée : `RESULTAT=<chemin>`.
+- `writeResult(json, { official })` : nom de fichier tiré de `json.date` (deux-points remplacés par des tirets, sinon Windows refuse), écriture dans `.tmp` puis `fs.rename`, dossier `results/` ou `results-dev/`. Si invalide → `rejets/`, erreurs affichées, `process.exitCode = 2`. Dernière ligne affichée : `RESULTAT=<chemin>`.
 
 ### 3. Le serveur (J2)
 

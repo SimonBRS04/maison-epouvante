@@ -1,0 +1,16 @@
+{
+  "name": "@maison-epouvante/bench-kit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Shared toolkit for the three benchmarks: CLI options, progress, statistics, environment, result validation and writing (Lot 1)",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": "./src/index.js",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "ajv": "^8.17.1",
+    "ajv-formats": "^3.0.1"
+  }
+}

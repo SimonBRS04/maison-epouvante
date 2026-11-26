@@ -1,0 +1,437 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/SimonBRS04/maison-epouvante/results/schema.json",
+  "title": "Benchmark result — contract v1",
+  "description": "One file per benchmark run. Source of truth: docs/socle-commun.md, section 8. Cross-field rules (technos per comparison, one value per techno, min <= median <= max…) are checked in packages/bench-kit/src/validate.js.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "comparatif",
+    "date",
+    "duree_s",
+    "environnement",
+    "technos",
+    "mesures",
+    "scenarios",
+    "erreurs"
+  ],
+  "properties": {
+    "version": {
+      "const": 1
+    },
+    "comparatif": {
+      "$ref": "#/$defs/comparisonId"
+    },
+    "date": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "duree_s": {
+      "type": "number",
+      "minimum": 0
+    },
+    "environnement": {
+      "$ref": "#/$defs/environment"
+    },
+    "technos": {
+      "type": "array",
+      "minItems": 2,
+      "maxItems": 2,
+      "items": {
+        "$ref": "#/$defs/techno"
+      }
+    },
+    "mesures": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/measure"
+      }
+    },
+    "scenarios": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/scenario"
+      }
+    },
+    "erreurs": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/benchError"
+      }
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "comparatif": {
+            "const": "cicd"
+          }
+        },
+        "required": [
+          "comparatif"
+        ]
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "technos": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "enum": [
+                    "github_actions",
+                    "teamcity"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "comparatif": {
+            "const": "sso"
+          }
+        },
+        "required": [
+          "comparatif"
+        ]
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "technos": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "enum": [
+                    "keycloak",
+                    "auth0"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "type": "object",
+        "properties": {
+          "comparatif": {
+            "const": "brokers"
+          }
+        },
+        "required": [
+          "comparatif"
+        ]
+      },
+      "then": {
+        "type": "object",
+        "properties": {
+          "technos": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "enum": [
+                    "kafka",
+                    "rabbitmq"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "$defs": {
+    "comparisonId": {
+      "enum": [
+        "cicd",
+        "sso",
+        "brokers"
+      ]
+    },
+    "technoId": {
+      "enum": [
+        "github_actions",
+        "teamcity",
+        "keycloak",
+        "auth0",
+        "kafka",
+        "rabbitmq"
+      ]
+    },
+    "snakeCaseId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(_[a-z0-9]+)*$",
+      "maxLength": 64
+    },
+    "label": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 120
+    },
+    "environment": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "machine",
+        "os",
+        "cpu",
+        "ram_go",
+        "commit"
+      ],
+      "properties": {
+        "machine": {
+          "type": "string",
+          "minLength": 1
+        },
+        "os": {
+          "type": "string",
+          "minLength": 1
+        },
+        "cpu": {
+          "type": "string",
+          "minLength": 1
+        },
+        "ram_go": {
+          "type": "number",
+          "minimum": 0
+        },
+        "commit": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "techno": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "nom",
+        "version"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/technoId"
+        },
+        "nom": {
+          "$ref": "#/$defs/label"
+        },
+        "version": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    },
+    "stats": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "mediane",
+        "min",
+        "max"
+      ],
+      "properties": {
+        "mediane": {
+          "type": "number"
+        },
+        "min": {
+          "type": "number"
+        },
+        "max": {
+          "type": "number"
+        }
+      }
+    },
+    "measure": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "libelle",
+        "categorie",
+        "unite",
+        "meilleur",
+        "repetitions",
+        "valeurs"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/snakeCaseId"
+        },
+        "libelle": {
+          "$ref": "#/$defs/label"
+        },
+        "categorie": {
+          "enum": [
+            "Performance",
+            "Durée par étape",
+            "Ressources",
+            "Fiabilité",
+            "Sécurité",
+            "Exploitation"
+          ]
+        },
+        "unite": {
+          "enum": [
+            "ms",
+            "s",
+            "msg/s",
+            "Mo",
+            "%",
+            "nombre",
+            "lignes"
+          ]
+        },
+        "meilleur": {
+          "enum": [
+            "bas",
+            "haut"
+          ]
+        },
+        "repetitions": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "note": {
+          "$ref": "#/$defs/label"
+        },
+        "valeurs": {
+          "type": "object",
+          "minProperties": 2,
+          "maxProperties": 2,
+          "propertyNames": {
+            "$ref": "#/$defs/technoId"
+          },
+          "additionalProperties": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/stats"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "scenarioResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "statut",
+        "constat"
+      ],
+      "properties": {
+        "statut": {
+          "enum": [
+            "OK",
+            "KO",
+            "PARTIEL",
+            "NA"
+          ]
+        },
+        "constat": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 120
+        },
+        "valeur": {
+          "type": "number"
+        },
+        "unite": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 40
+        }
+      },
+      "dependentRequired": {
+        "valeur": [
+          "unite"
+        ],
+        "unite": [
+          "valeur"
+        ]
+      }
+    },
+    "scenario": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "libelle",
+        "categorie",
+        "attendu",
+        "resultats"
+      ],
+      "properties": {
+        "id": {
+          "$ref": "#/$defs/snakeCaseId"
+        },
+        "libelle": {
+          "$ref": "#/$defs/label"
+        },
+        "categorie": {
+          "enum": [
+            "Performance",
+            "Ressources",
+            "Fiabilité",
+            "Sécurité",
+            "Exploitation"
+          ]
+        },
+        "attendu": {
+          "$ref": "#/$defs/label"
+        },
+        "resultats": {
+          "type": "object",
+          "minProperties": 2,
+          "maxProperties": 2,
+          "propertyNames": {
+            "$ref": "#/$defs/technoId"
+          },
+          "additionalProperties": {
+            "$ref": "#/$defs/scenarioResult"
+          }
+        }
+      }
+    },
+    "benchError": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "etape",
+        "message"
+      ],
+      "properties": {
+        "etape": {
+          "type": "string",
+          "minLength": 1
+        },
+        "message": {
+          "type": "string",
+          "minLength": 1
+        }
+      }
+    }
+  }
+}

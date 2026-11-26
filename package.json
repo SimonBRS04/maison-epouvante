@@ -20,6 +20,7 @@
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write .",
     "test": "npm test --workspaces --if-present",
+    "validate:results": "node scripts/validate-results.js",
     "start:catalogue": "npm start -w services/catalogue",
     "start:troc": "npm start -w services/troc",
     "start:notifications": "npm start -w services/notifications",
@@ -29,6 +30,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
+    "@maison-epouvante/bench-kit": "0.1.0",
     "eslint": "^9.39.5",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.14.0",
