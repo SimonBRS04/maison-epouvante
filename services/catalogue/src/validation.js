@@ -1,7 +1,7 @@
 export const CATEGORIES = ['figurines', 'blu-ray', 'bd', 'jeux', 'goodies', 'fanzine'];
 
 /**
- * Valide le corps d'un nouveau produit.
+ * Validates the body of a new product. Error messages are returned to API clients, hence in French.
  * @returns {{ value?: object, error?: string }}
  */
 export function validateProduct(body) {

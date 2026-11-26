@@ -2,7 +2,8 @@ export const CATEGORIES = ['figurines', 'blu-ray', 'bd', 'jeux', 'goodies', 'fan
 export const OFFER_TYPES = ['echange', 'don'];
 
 /**
- * Valide le corps d'une nouvelle offre. Le membreId ne vient jamais du corps (il vient du jeton).
+ * Validates the body of a new offer. The membreId never comes from the body (it comes from the token).
+ * Error messages are returned to API clients, hence in French.
  * @returns {{ value?: object, error?: string }}
  */
 export function validateOffer(body) {

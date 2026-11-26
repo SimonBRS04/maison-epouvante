@@ -1,15 +1,15 @@
 /**
- * Module de messagerie partagé — propriétaire : Lot 4.
+ * Shared messaging module — owner: Lot 4.
  *
- * Interface figée (voir docs/lots/lot-4-brokers.md) :
+ * Frozen interface (see docs/lots/lot-4-brokers.md):
  *   const publisher = await createPublisher({ broker });
  *   await publisher.publish('offers', event, { key: event.membreId });
  *
  *   const subscriber = await createSubscriber({ broker, group: 'notifications' });
- *   await subscriber.subscribe('offers', async (event) => { ... }); // lever une erreur = redistribution
+ *   await subscriber.subscribe('offers', async (event) => { ... }); // throwing = redelivery
  *
- * État du squelette : seul l'adaptateur `memory` est implémenté.
- * Les adaptateurs `kafka` et `rabbitmq` sont à implémenter par le Lot 4.
+ * Skeleton status: only the `memory` adapter is implemented.
+ * The `kafka` and `rabbitmq` adapters are to be implemented by Lot 4.
  */
 import { createMemoryPublisher, createMemorySubscriber } from './adapters/memory.js';
 
@@ -18,7 +18,7 @@ const BROKERS = ['memory', 'kafka', 'rabbitmq'];
 /**
  * @param {object} [options]
  * @param {'memory'|'kafka'|'rabbitmq'} [options.broker]
- * @param {boolean} [options.secure] Accusés de réception + persistance (Kafka, RabbitMQ).
+ * @param {boolean} [options.secure] Acknowledgements + persistence (Kafka, RabbitMQ).
  */
 export async function createPublisher({
   broker = process.env.BROKER ?? 'memory',
@@ -26,16 +26,16 @@ export async function createPublisher({
 } = {}) {
   assertKnownBroker(broker);
   if (broker === 'memory') return createMemoryPublisher(options);
-  // TODO Lot 4 : adaptateurs kafka (kafkajs) et rabbitmq (amqplib), avec reconnexion.
-  throw new Error(`Broker "${broker}" : à implémenter par le Lot 4.`);
+  // TODO Lot 4: kafka (kafkajs) and rabbitmq (amqplib) adapters, with reconnection.
+  throw new Error(`Broker "${broker}": to be implemented by Lot 4.`);
 }
 
 /**
  * @param {object} options
- * @param {string} options.group Groupe de consommateurs (même groupe = consommateurs concurrents).
+ * @param {string} options.group Consumer group (same group = competing consumers).
  * @param {'memory'|'kafka'|'rabbitmq'} [options.broker]
- * @param {boolean} [options.fromBeginning] Relire l'historique (Kafka).
- * @param {number} [options.prefetch] Messages non acquittés par consommateur (RabbitMQ).
+ * @param {boolean} [options.fromBeginning] Replay the history (Kafka).
+ * @param {number} [options.prefetch] Unacknowledged messages per consumer (RabbitMQ).
  */
 export async function createSubscriber({
   broker = process.env.BROKER ?? 'memory',
@@ -43,15 +43,15 @@ export async function createSubscriber({
   ...options
 } = {}) {
   assertKnownBroker(broker);
-  if (!group) throw new Error('createSubscriber : le paramètre "group" est obligatoire.');
+  if (!group) throw new Error('createSubscriber: the "group" option is required.');
   if (broker === 'memory') return createMemorySubscriber({ group, ...options });
-  throw new Error(`Broker "${broker}" : à implémenter par le Lot 4.`);
+  throw new Error(`Broker "${broker}": to be implemented by Lot 4.`);
 }
 
 export { resetMemoryBus } from './adapters/memory.js';
 
 function assertKnownBroker(broker) {
   if (!BROKERS.includes(broker)) {
-    throw new Error(`BROKER inconnu : "${broker}". Valeurs possibles : ${BROKERS.join(', ')}.`);
+    throw new Error(`Unknown BROKER "${broker}". Allowed values: ${BROKERS.join(', ')}.`);
   }
 }

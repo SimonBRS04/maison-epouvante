@@ -11,23 +11,23 @@ function buildApp(auth) {
 }
 
 describe('createAuth', () => {
-  it('refuse un fournisseur inconnu', () => {
-    expect(() => createAuth({ provider: 'ldap' })).toThrow(/inconnu/);
+  it('rejects an unknown provider', () => {
+    expect(() => createAuth({ provider: 'ldap' })).toThrow(/Unknown SSO/);
   });
 
-  it('refuse le mode none en production', () => {
-    expect(() => createAuth({ provider: 'none', nodeEnv: 'production' })).toThrow(/interdit/);
+  it('refuses the none mode in production', () => {
+    expect(() => createAuth({ provider: 'none', nodeEnv: 'production' })).toThrow(/forbidden/);
   });
 
-  it('signale les fournisseurs pas encore implémentés', () => {
+  it('reports providers not implemented yet', () => {
     expect(() => createAuth({ provider: 'keycloak', nodeEnv: 'test' })).toThrow(/Lot 3/);
   });
 });
 
-describe('mode none', () => {
+describe('none mode', () => {
   const app = buildApp(createAuth({ provider: 'none', nodeEnv: 'test' }));
 
-  it('fournit un utilisateur de développement avec tous les rôles', async () => {
+  it('provides a development user with every role', async () => {
     const res = await request(app).get('/moderateur');
     expect(res.status).toBe(200);
     expect(res.body).toEqual({
@@ -37,7 +37,7 @@ describe('mode none', () => {
     });
   });
 
-  it("prend l'identifiant et les rôles dans les en-têtes de développement", async () => {
+  it('reads the id and roles from the development headers', async () => {
     const res = await request(app)
       .get('/membre')
       .set('X-Dev-User', 'm-042')
@@ -46,13 +46,13 @@ describe('mode none', () => {
     expect(res.body.id).toBe('m-042');
   });
 
-  it('répond 403 si le rôle manque', async () => {
+  it('returns 403 when the role is missing', async () => {
     const res = await request(app).get('/moderateur').set('X-Dev-Roles', 'membre');
     expect(res.status).toBe(403);
     expect(res.body.erreur.code).toBe('ROLE_MANQUANT');
   });
 
-  it("ajoute l'en-tête Server-Timing", async () => {
+  it('adds the Server-Timing header', async () => {
     const res = await request(app).get('/membre');
     expect(res.headers['server-timing']).toMatch(/^auth;dur=\d+(\.\d+)?$/);
   });

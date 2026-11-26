@@ -4,7 +4,7 @@ import { errorHandler, notFoundHandler } from './http.js';
 import { healthRouter } from './routes/health.js';
 import { notificationsRouter } from './routes/notifications.js';
 
-/** Crée l'application HTTP sans la démarrer (testable avec Supertest). */
+/** Builds the HTTP application without starting it (testable with Supertest). */
 export function createApp({ store, auth = createAuth() }) {
   const app = express();
   app.disable('x-powered-by');

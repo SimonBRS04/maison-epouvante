@@ -25,9 +25,9 @@ export function offersRouter({ store, auth, publisher }) {
     try {
       await publisher.publish(OFFER_TOPIC, event, { key: offer.membreId });
     } catch (publishError) {
-      // Choix documenté : pas d'offre sans notification possible → on annule la création.
+      // Documented choice: no offer without a possible notification → roll the creation back.
       store.remove(offer.id);
-      console.error('[troc] publication impossible :', publishError);
+      console.error('[troc] publishing failed:', publishError);
       return sendError(
         res,
         503,

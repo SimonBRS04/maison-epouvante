@@ -1,18 +1,18 @@
 /**
- * Adaptateur `memory` : un bus d'événements dans le processus.
- * Mêmes règles que les vrais brokers :
- *   - chaque groupe reçoit sa copie du message ;
- *   - dans un groupe, les consommateurs se partagent les messages (tour de rôle) ;
- *   - un traitement qui lève une erreur est redistribué (MAX_DELIVERIES tentatives au total) ;
- *   - le message est sérialisé en JSON, comme sur le réseau.
- * Ne traverse pas les processus ni les conteneurs : développement et tests uniquement.
+ * `memory` adapter: an in-process event bus.
+ * Same rules as the real brokers:
+ *   - each group receives its own copy of the message;
+ *   - within a group, consumers share the messages (round robin);
+ *   - a handler that throws gets the message redelivered (MAX_DELIVERIES attempts in total);
+ *   - the message is serialised to JSON, as on the network.
+ * Does not cross processes or containers: development and tests only.
  */
 const MAX_DELIVERIES = 5;
 
-/** topic → (groupe → { handlers, nextIndex }) */
+/** topic → (group → { handlers, nextIndex }) */
 let bus = new Map();
 
-/** Vide le bus (à appeler entre deux tests). */
+/** Empties the bus (call it between tests). */
 export function resetMemoryBus() {
   bus = new Map();
 }
@@ -53,7 +53,7 @@ function groupsOf(topic) {
   return bus.get(topic);
 }
 
-/** Livraison asynchrone, comme un vrai broker : publish() n'attend pas le traitement. */
+/** Asynchronous delivery, like a real broker: publish() does not wait for processing. */
 function deliver(group, serialized, attempt) {
   setImmediate(async () => {
     if (group.handlers.length === 0) return;
@@ -65,7 +65,7 @@ function deliver(group, serialized, attempt) {
       if (attempt < MAX_DELIVERIES) {
         deliver(group, serialized, attempt + 1);
       } else {
-        console.error(`[messaging:memory] message abandonné après ${attempt} tentatives :`, error);
+        console.error(`[messaging:memory] message dropped after ${attempt} attempts:`, error);
       }
     }
   });

@@ -1,7 +1,7 @@
 /**
- * Banc de test « cicd » — Lot 2.
- * Point d'entrée unique, lancé par : npm run bench:cicd [-- --officiel] [-- --rapide]
- * Contrat d'exécution : bench/README.md. À remplacer par le vrai banc.
+ * Benchmark "cicd" — Lot 2.
+ * Single entry point, run with: npm run bench:cicd [-- --officiel] [-- --rapide]
+ * Execution contract: bench/README.md. Placeholder, to be replaced by the real benchmark.
  */
 console.log('ETAPE=Banc cicd : pas encore implémenté (Lot 2)');
 process.exitCode = 1;

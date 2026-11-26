@@ -7,12 +7,12 @@ export function loadInterests() {
 }
 
 /**
- * Transforme un événement offer.created en notifications pour les membres intéressés.
- * Idempotent : un même événement livré deux fois ne crée pas de doublon
- * (les brokers garantissent « au moins une fois », pas « exactement une fois »).
+ * Turns an offer.created event into notifications for the interested members.
+ * Idempotent: the same event delivered twice creates no duplicate
+ * (brokers guarantee "at least once", not "exactly once").
  *
  * @param {object} deps
- * @param {Record<string, string[]>} deps.interests membreId → catégories suivies
+ * @param {Record<string, string[]>} deps.interests membreId → followed categories
  */
 export function createNotifier({ store, interests = loadInterests() }) {
   return {

@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 
 const SEED_FILE = new URL('../data/offers.json', import.meta.url);
 
-/** Stockage en mémoire des offres, initialisé depuis data/offers.json. */
+/** In-memory offer store, seeded from data/offers.json. */
 export function createOfferStore(seed = JSON.parse(readFileSync(SEED_FILE, 'utf8'))) {
   const offers = new Map(seed.map((offer) => [offer.id, offer]));
   let lastNumber = Math.max(0, ...seed.map((offer) => Number(offer.id.split('-')[1]) || 0));

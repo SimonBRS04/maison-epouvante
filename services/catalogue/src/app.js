@@ -6,8 +6,8 @@ import { productsRouter } from './routes/products.js';
 import { createProductStore } from './store.js';
 
 /**
- * Crée l'application sans la démarrer (testable avec Supertest).
- * Les dépendances sont injectables pour les tests.
+ * Builds the application without starting it (testable with Supertest).
+ * Dependencies can be injected for tests.
  */
 export function createApp({ auth = createAuth(), store = createProductStore() } = {}) {
   const app = express();

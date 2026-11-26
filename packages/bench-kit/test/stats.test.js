@@ -10,7 +10,7 @@ describe('median', () => {
     expect(median([1, 2, 3, 10])).toBe(2.5);
   });
 
-  it('does not reorder the caller’s array', () => {
+  it("does not reorder the caller's array", () => {
     const values = [3, 1, 2];
     median(values);
     expect(values).toEqual([3, 1, 2]);

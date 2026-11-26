@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 
 const SEED_FILE = new URL('../data/products.json', import.meta.url);
 
-/** Stockage en mémoire des produits, initialisé depuis data/products.json. */
+/** In-memory product store, seeded from data/products.json. */
 export function createProductStore(seed = JSON.parse(readFileSync(SEED_FILE, 'utf8'))) {
   const products = new Map(seed.map((product) => [product.id, product]));
   let lastNumber = Math.max(0, ...seed.map((product) => Number(product.id.split('-')[1]) || 0));

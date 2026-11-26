@@ -1,8 +1,8 @@
 /**
- * Mode `none` : aucune vérification, pour le développement et les tests uniquement.
- * En-têtes facultatifs :
- *   X-Dev-User  : identifiant du membre (défaut « dev-membre »)
- *   X-Dev-Roles : rôles séparés par des virgules (défaut « membre,moderateur »)
+ * `none` mode: no verification, for development and tests only.
+ * Optional headers:
+ *   X-Dev-User  : member id (default "dev-membre")
+ *   X-Dev-Roles : comma-separated roles (default "membre,moderateur")
  */
 const DEFAULT_ROLES = ['membre', 'moderateur'];
 

@@ -1,4 +1,4 @@
-# Fins de ligne LF partout (équipe Windows + Linux), sauf les scripts Windows
+# LF line endings everywhere (mixed Windows + Linux team), except Windows scripts
 * text=auto eol=lf
 *.bat text eol=crlf
 *.cmd text eol=crlf

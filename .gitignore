@@ -1,23 +1,23 @@
-# Dépendances
+# Dependencies
 node_modules/
 
-# Secrets : JAMAIS commités (le dépôt est public)
+# Secrets: NEVER committed (the repository is public)
 .env
 .env.*
 !.env.example
 *.pem
 *.key
 
-# Résultats de développement (seuls les officiels sont versionnés)
+# Development results (only official runs are versioned)
 results-dev/
 results/*/rejets/
 *.json.tmp
 
-# Données des outils locaux
+# Local tool data
 infra/cicd/data/
 infra/**/data/
 
-# Divers
+# Misc
 coverage/
 *.log
 .DS_Store

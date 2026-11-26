@@ -92,11 +92,20 @@ config(cicd): ajouter le scan Trivy dans GitHub Actions
 config(results): ajouter le lancement officiel brokers du 2026-12-03
 ```
 
-### Code
+### Code et langue
 
-- Variables, fonctions, fichiers : **en anglais**, `camelCase` pour les variables et fonctions, `kebab-case` pour les fichiers.
-- Commentaires, README, messages de commit, pull requests : **en français**.
-- Identifiants du contrat de résultats (`id` de mesures et scénarios) : `snake_case`, sans accent.
+**Tout le code est en anglais** : noms de variables, fonctions et fichiers, **commentaires**, noms des tests, messages d'erreur techniques et journaux (`console.log`).
+
+**Reste en français** ce qu'une personne lit en dehors du code :
+
+- les textes vus par l'utilisateur : messages d'erreur renvoyés par l'API, interface du dashboard, lignes de progression `ETAPE=` ;
+- la documentation (README, `docs/`), les messages de commit et les pull requests ;
+- les clés du contrat de résultats et des API (`mesures`, `constat`, `membreId`…), déjà fixées par le socle commun.
+
+Conventions :
+
+- `camelCase` pour les variables et fonctions, `kebab-case` pour les fichiers, `snake_case` sans accent pour les `id` de mesures et de scénarios.
+- **Commenter le pourquoi, pas le quoi** : un commentaire explique un choix, une contrainte ou un piège, jamais ce que la ligne dit déjà. Chaque fonction exportée a un court bloc JSDoc (rôle, paramètres, retour).
 
 ---
 
