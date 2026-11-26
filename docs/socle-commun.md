@@ -227,14 +227,14 @@ Résumé en une page, avec le schéma du bouton « Lancer » : [`bench/README.md
 
 - **Boîte à outils commune** : chaque banc importe `@maison-epouvante/bench-kit` (Lot 1) au lieu de réécrire ces fonctions :
 
-  | Fonction                                     | Rôle                                                                                                                 |
-  | -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-  | `parseArgs()`                                | lit `--rapide`, `--officiel`, `--collecte-seule` et le nombre de répétitions                                         |
-  | `step(texte)`                                | écrit la ligne `ETAPE=…`                                                                                             |
-  | `measure(fn, { repetitions, echauffement })` | lance une mesure plusieurs fois, renvoie `{ mediane, min, max }`                                                     |
-  | `percentile(valeurs, p)`, `median(valeurs)`  | statistiques                                                                                                         |
-  | `environment()`                              | remplit le bloc `environnement` (machine, OS, CPU, RAM, commit)                                                      |
-  | `writeResult(json, { officiel })`            | valide le JSON, l'écrit de façon atomique au bon endroit, affiche `RESULTAT=…`, gère les rejets et le code de sortie |
+  | Fonction                                    | Rôle                                                                                                                                |
+  | ------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------- |
+  | `parseArgs()`                               | lit `--rapide`, `--officiel`, `--collecte-seule`, `--repetitions` ; renvoie `{ official, quick, collectOnly, repetitions, warmup }` |
+  | `step(texte)`                               | écrit la ligne `ETAPE=…`                                                                                                            |
+  | `measure(fn, { repetitions, warmup })`      | lance une mesure plusieurs fois, renvoie `{ mediane, min, max }`                                                                    |
+  | `percentile(valeurs, p)`, `median(valeurs)` | statistiques                                                                                                                        |
+  | `environment()`                             | remplit le bloc `environnement` (machine, OS, CPU, RAM, commit)                                                                     |
+  | `writeResult(json, { official })`           | valide le JSON, l'écrit de façon atomique au bon endroit, affiche `RESULTAT=…`, gère les rejets et le code de sortie                |
 
 - Le banc tourne sur la machine hôte (Node.js), pas dans un conteneur : il pilote les technos avec `docker compose` / `docker kill` / `docker start`.
 - Commande : `npm run bench:<comparatif>` à la racine.
