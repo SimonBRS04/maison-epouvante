@@ -1,0 +1,44 @@
+# Pipeline GitHub Actions — propriétaire : Lot 2.
+#
+# SQUELETTE : 3 étapes sur les 10 prévues (voir docs/lots/lot-2-cicd.md).
+# Le Lot 2 ajoute les autres étapes dans ce même job, avec les noms exacts de son fichier.
+#
+# IMPORTANT : le job doit garder le nom « qualite ». La protection de la branche main
+# exige ce contrôle avant toute fusion ; le renommer bloquerait toutes les PR.
+
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  qualite:
+    name: qualite
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: installation
+        run: npm ci
+
+      - name: lint
+        run: npm run lint
+
+      - name: tests_unitaires
+        run: npm test

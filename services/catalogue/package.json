@@ -1,0 +1,17 @@
+{
+  "name": "@maison-epouvante/catalogue",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Service Catalogue : produits de la boutique (Lot 3)",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@maison-epouvante/auth": "0.1.0",
+    "express": "^5.3.0"
+  }
+}

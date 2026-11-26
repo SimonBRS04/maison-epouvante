@@ -1,0 +1,12 @@
+{
+  "name": "@maison-epouvante/messaging",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Publication et consommation d'événements partagées par les services (Lot 4)",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": "./src/index.js",
+  "scripts": {
+    "test": "vitest run"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "name": "@maison-epouvante/troc",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Service Troc : offres d'échange et de don entre membres (Lot 2)",
+  "type": "module",
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@maison-epouvante/auth": "0.1.0",
+    "@maison-epouvante/messaging": "0.1.0",
+    "express": "^5.3.0"
+  }
+}

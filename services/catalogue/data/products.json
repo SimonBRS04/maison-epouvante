@@ -1,0 +1,82 @@
+[
+  {
+    "id": "p-001",
+    "nom": "Figurine L'Orc — édition exclusive Evil Ed",
+    "categorie": "figurines",
+    "prix": 4990,
+    "stock": 25,
+    "exclusifEnLigne": true
+  },
+  {
+    "id": "p-002",
+    "nom": "Figurine L'Orc — version chaman",
+    "categorie": "figurines",
+    "prix": 3990,
+    "stock": 40,
+    "exclusifEnLigne": true
+  },
+  {
+    "id": "p-003",
+    "nom": "Riflesso di un coltello nella notte — Blu-ray restauré",
+    "categorie": "blu-ray",
+    "prix": 2990,
+    "stock": 120,
+    "exclusifEnLigne": false
+  },
+  {
+    "id": "p-004",
+    "nom": "Coffret Blu-ray Petit Festival de l'Épouvante",
+    "categorie": "blu-ray",
+    "prix": 5490,
+    "stock": 30,
+    "exclusifEnLigne": false
+  },
+  {
+    "id": "p-005",
+    "nom": "L'Orc — tome 1 (bande dessinée)",
+    "categorie": "bd",
+    "prix": 1690,
+    "stock": 80,
+    "exclusifEnLigne": false
+  },
+  {
+    "id": "p-006",
+    "nom": "Fanzine n° 36 — numérique",
+    "categorie": "fanzine",
+    "prix": 490,
+    "stock": 9999,
+    "exclusifEnLigne": true
+  },
+  {
+    "id": "p-007",
+    "nom": "Fanzine n° 36 — papier",
+    "categorie": "fanzine",
+    "prix": 790,
+    "stock": 300,
+    "exclusifEnLigne": false
+  },
+  {
+    "id": "p-008",
+    "nom": "Jeu de plateau « Le Manoir maudit »",
+    "categorie": "jeux",
+    "prix": 4490,
+    "stock": 15,
+    "exclusifEnLigne": false
+  },
+  {
+    "id": "p-009",
+    "nom": "Mug « Le lieu de rêve pour frissonner »",
+    "categorie": "goodies",
+    "prix": 1290,
+    "stock": 200,
+    "exclusifEnLigne": false
+  },
+  {
+    "id": "p-010",
+    "nom": "Affiche sérigraphiée du festival",
+    "categorie": "goodies",
+    "prix": 1990,
+    "stock": 50,
+    "exclusifEnLigne": false
+  }
+]

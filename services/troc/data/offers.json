@@ -1,0 +1,29 @@
+[
+  {
+    "id": "o-0001",
+    "membreId": "m-001",
+    "titre": "Figurine L'Orc en double",
+    "description": "Jamais déballée, échange contre une BD.",
+    "type": "echange",
+    "categorie": "figurines",
+    "creeA": "2026-11-20T18:02:00.000Z"
+  },
+  {
+    "id": "o-0002",
+    "membreId": "m-002",
+    "titre": "Fanzines n° 10 à 15",
+    "description": "À donner, un peu cornés.",
+    "type": "don",
+    "categorie": "fanzine",
+    "creeA": "2026-11-22T09:41:00.000Z"
+  },
+  {
+    "id": "o-0003",
+    "membreId": "m-003",
+    "titre": "Affiche du festival 2024",
+    "description": "",
+    "type": "echange",
+    "categorie": "goodies",
+    "creeA": "2026-11-24T21:15:00.000Z"
+  }
+]

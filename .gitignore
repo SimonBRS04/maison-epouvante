@@ -1,0 +1,25 @@
+# Dépendances
+node_modules/
+
+# Secrets : JAMAIS commités (le dépôt est public)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Résultats de développement (seuls les officiels sont versionnés)
+results-dev/
+results/*/rejets/
+*.json.tmp
+
+# Données des outils locaux
+infra/cicd/data/
+infra/**/data/
+
+# Divers
+coverage/
+*.log
+.DS_Store
+Thumbs.db
+.idea/
