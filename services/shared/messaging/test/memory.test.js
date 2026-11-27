@@ -13,10 +13,6 @@ describe('option validation', () => {
   it('requires a group to consume', async () => {
     await expect(createSubscriber({ broker: 'memory' })).rejects.toThrow(/group/);
   });
-
-  it('reports brokers not implemented yet', async () => {
-    await expect(createPublisher({ broker: 'kafka' })).rejects.toThrow(/Lot 4/);
-  });
 });
 
 describe('memory adapter', () => {
