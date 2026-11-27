@@ -1,6 +1,6 @@
 # troc service — build from the repository root (monorepo):
 #   docker build -f services/troc/Dockerfile -t maison-epouvante-troc .
-FROM node:22-alpine
+FROM node:24-alpine
 
 WORKDIR /app
 ENV NODE_ENV=production
