@@ -133,7 +133,11 @@ Corps de `POST /offers` : `titre` (3 à 80 caractères), `description` (500 maxi
 - Les 3 services, construits depuis leurs Dockerfile, sur leurs ports du socle.
 - Un RabbitMQ pour que les services se parlent vraiment (`BROKER=rabbitmq`). L'adaptateur `memory` ne traverse pas les conteneurs.
 - `SSO=none` et `NODE_ENV=test` pour les tests d'intégration. Les vrais fournisseurs SSO restent dans le banc du Lot 3.
-- `healthcheck` sur chaque service, et `depends_on` avec `condition: service_healthy`.
+- `healthcheck` sur chaque service, et `depends_on` avec `condition: service_healthy`. **Ordre de démarrage obligatoire** :
+  - Troc et Notifications attendent le broker. Sans lui, ils s'arrêtent au démarrage. Le healthcheck du broker est déjà écrit dans `infra/brokers/compose.yml` (`rabbitmq-diagnostics -q ping`), reprends-le.
+  - Troc attend **aussi** Notifications. La file de Notifications (le groupe, avec Kafka) n'existe qu'une fois qu'il s'est abonné, et Notifications ne répond sur `/health` qu'après. Un message envoyé avant le tout premier démarrage de Notifications serait perdu : c'est le seul cas de perte, ensuite les messages l'attendent dans le broker.
+  - **Pas l'inverse** : Notifications n'appelle aucun service, il n'attend que le broker. Les deux attentes croisées bloqueraient le démarrage (Compose refuse la boucle).
+  - Pour essayer Kafka : `BROKER=kafka` et `KAFKA_BROKERS=kafka:29092` (le listener réseau Docker, voir `infra/brokers/compose.yml`).
 - Test d'intégration de bout en bout : `POST /offers` sur Troc → la notification apparaît sur `GET /notifications` (réessayer pendant 5 s maximum).
 
 ---
