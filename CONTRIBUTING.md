@@ -21,7 +21,7 @@
 ```bash
 git clone https://github.com/SimonBRS04/maison-epouvante.git
 cd maison-epouvante
-nvm use            # Node 22, lu dans .nvmrc (sous Windows : nvm-windows ou installer Node 22)
+nvm use            # Node 24, lu dans .nvmrc (sous Windows : nvm-windows ou installer Node 24)
 npm ci             # installe tout le monorepo
 cp .env.example .env
 npm run lint       # doit passer

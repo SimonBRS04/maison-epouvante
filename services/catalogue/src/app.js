@@ -3,13 +3,14 @@ import { createAuth } from '@maison-epouvante/auth';
 import { errorHandler, notFoundHandler } from './http.js';
 import { healthRouter } from './routes/health.js';
 import { productsRouter } from './routes/products.js';
-import { createProductStore } from './store.js';
 
 /**
  * Builds the application without starting it (testable with Supertest).
- * Dependencies can be injected for tests.
+ * @param {object} deps
+ * @param {object} deps.store Product store, from createProductStore() (src/stores).
+ * @param {object} [deps.auth] Authentication middleware, from @maison-epouvante/auth.
  */
-export function createApp({ auth = createAuth(), store = createProductStore() } = {}) {
+export function createApp({ store, auth = createAuth() }) {
   const app = express();
   app.disable('x-powered-by');
   app.use(express.json({ limit: '100kb' }));

@@ -17,7 +17,8 @@ La comparaison CI/CD est **obligatoire** dans la grille (3 points). Ton pipeline
 
 ## Déjà en place dans le squelette
 
-- **Service Troc** complet pour démarrer : les 4 routes, la validation, la publication de `offer.created`, le choix « 503 si la publication échoue », 9 tests, le Dockerfile, le README. Il est dans ta partie : fais-le évoluer, garde les tests verts.
+- **Service Troc** complet pour démarrer : les 4 routes, la validation, la publication de `offer.created`, le choix « 503 si la publication échoue », les deux stockages (mémoire et PostgreSQL, choisis par `STORE`), les tests, le Dockerfile, le README. Il est dans ta partie : fais-le évoluer, garde les tests verts.
+- **La CI démarre déjà un PostgreSQL** (service `postgres` du job `qualite`) pour les tests des stockages. Garde-le en ajoutant tes étapes.
 - **`.github/workflows/ci.yml`** : un job `qualite` avec 3 des 10 étapes (`installation`, `lint`, `tests_unitaires`). Ajoute les 7 autres **dans ce même job**, et **ne renomme jamais le job `qualite`** : la protection de `main` l'exige pour toute fusion.
 - `infra/poc/`, `infra/cicd/`, `bench/cicd/`, `.teamcity/` : vides, à toi de jouer.
 
@@ -131,6 +132,8 @@ Corps de `POST /offers` : `titre` (3 à 80 caractères), `description` (500 maxi
 ### `infra/poc/compose.yml`
 
 - Les 3 services, construits depuis leurs Dockerfile, sur leurs ports du socle.
+- `name: maison-epouvante` en tête du fichier, comme tous les compose du projet : ils partagent ainsi un seul PostgreSQL.
+- PostgreSQL : **inclus**, pas recopié (`include: [../postgres/compose.yml]`). Chaque service reçoit `STORE=postgres` et son URL, avec `postgres` comme hôte dans le réseau Docker (`postgres://maison:maison_dev@postgres:5432/troc`…), et `depends_on: postgres: condition: service_healthy`.
 - Un RabbitMQ pour que les services se parlent vraiment (`BROKER=rabbitmq`). L'adaptateur `memory` ne traverse pas les conteneurs.
 - `SSO=none` et `NODE_ENV=test` pour les tests d'intégration. Les vrais fournisseurs SSO restent dans le banc du Lot 3.
 - `healthcheck` sur chaque service, et `depends_on` avec `condition: service_healthy`.
@@ -209,4 +212,4 @@ Corps de `POST /offers` : `titre` (3 à 80 caractères), `description` (500 maxi
 
 ## Prompt de départ pour ton IA
 
-> Je travaille sur un projet étudiant (monorepo Node.js 22, modules ES, Express, Vitest, Docker). Je te joins `docs/socle-commun.md` (conventions et contrat de données, qui font foi) et `docs/lots/lot-2-cicd.md` (ma mission). Respecte strictement le socle et `CONTRIBUTING.md`. Commence par `.github/workflows/ci.yml` avec les 10 étapes nommées exactement comme dans mon fichier, Gitleaks, Trivy et le scanner Sonar lancés en images Docker à version épinglée. Code propre ; code, commentaires et noms de tests en anglais (voir CONTRIBUTING.md, « Code et langue »).
+> Je travaille sur un projet étudiant (monorepo Node.js 24, modules ES, Express, Vitest, Docker). Je te joins `docs/socle-commun.md` (conventions et contrat de données, qui font foi) et `docs/lots/lot-2-cicd.md` (ma mission). Respecte strictement le socle et `CONTRIBUTING.md`. Commence par `.github/workflows/ci.yml` avec les 10 étapes nommées exactement comme dans mon fichier, Gitleaks, Trivy et le scanner Sonar lancés en images Docker à version épinglée. Code propre ; code, commentaires et noms de tests en anglais (voir CONTRIBUTING.md, « Code et langue »).

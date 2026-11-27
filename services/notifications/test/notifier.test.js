@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { createNotifier } from '../src/notifier.js';
-import { createNotificationStore } from '../src/store.js';
+import { createMemoryNotificationStore } from '../src/stores/memory.js';
 
 const interests = { 'm-001': ['figurines'], 'm-002': ['figurines', 'bd'], 'm-003': ['bd'] };
 const event = {
@@ -12,25 +12,25 @@ const event = {
 };
 
 describe('createNotifier', () => {
-  it('notifies interested members, except the author of the offer', () => {
-    const store = createNotificationStore();
-    const created = createNotifier({ store, interests }).handle(event);
+  it('notifies interested members, except the author of the offer', async () => {
+    const store = createMemoryNotificationStore();
+    const created = await createNotifier({ store, interests }).handle(event);
     expect(created.map((n) => n.membreId)).toEqual(['m-002']);
     expect(created[0]).toMatchObject({ offerId: 'o-0010', categorie: 'figurines', lue: false });
   });
 
-  it('ignores an already processed event (idempotence)', () => {
-    const store = createNotificationStore();
+  it('ignores an already processed event (idempotence)', async () => {
+    const store = createMemoryNotificationStore();
     const notifier = createNotifier({ store, interests });
-    notifier.handle(event);
-    expect(notifier.handle(event)).toEqual([]);
-    expect(store.list()).toHaveLength(1);
+    await notifier.handle(event);
+    expect(await notifier.handle(event)).toEqual([]);
+    expect(await store.list()).toHaveLength(1);
   });
 
-  it('ignores other event types', () => {
-    const store = createNotificationStore();
+  it('ignores other event types', async () => {
+    const store = createMemoryNotificationStore();
     expect(
-      createNotifier({ store, interests }).handle({ ...event, type: 'offer.deleted' }),
+      await createNotifier({ store, interests }).handle({ ...event, type: 'offer.deleted' }),
     ).toEqual([]);
   });
 });

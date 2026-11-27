@@ -4,7 +4,12 @@ import { errorHandler, notFoundHandler } from './http.js';
 import { healthRouter } from './routes/health.js';
 import { notificationsRouter } from './routes/notifications.js';
 
-/** Builds the HTTP application without starting it (testable with Supertest). */
+/**
+ * Builds the HTTP application without starting it (testable with Supertest).
+ * @param {object} deps
+ * @param {object} deps.store Notification store, from createNotificationStore() (src/stores).
+ * @param {object} [deps.auth] Authentication middleware, from @maison-epouvante/auth.
+ */
 export function createApp({ store, auth = createAuth() }) {
   const app = express();
   app.disable('x-powered-by');

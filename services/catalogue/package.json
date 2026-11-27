@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@maison-epouvante/auth": "0.1.0",
+    "@maison-epouvante/db": "0.1.0",
     "express": "^5.3.0"
   }
 }

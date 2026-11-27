@@ -12,24 +12,28 @@ export function loadInterests() {
  * (brokers guarantee "at least once", not "exactly once").
  *
  * @param {object} deps
- * @param {Record<string, string[]>} deps.interests membreId → followed categories
+ * @param {object} deps.store Notification store, from createNotificationStore() (src/stores).
+ * @param {Record<string, string[]>} [deps.interests] membreId → followed categories
  */
 export function createNotifier({ store, interests = loadInterests() }) {
   return {
-    handle(event) {
+    /** @returns {Promise<object[]>} The notifications created (empty if already processed). */
+    async handle(event) {
       if (event.type !== 'offer.created') return [];
-      if (store.isProcessed(event.id)) return [];
+      if (await store.isProcessed(event.id)) return [];
 
       const { offerId, titre, categorie } = event.payload;
-      const created = Object.entries(interests)
+      const recipients = Object.entries(interests)
         .filter(
           ([membreId, categories]) => membreId !== event.membreId && categories.includes(categorie),
         )
-        .map(([membreId]) =>
-          store.add({ membreId, offerId, titre, categorie, creeA: new Date().toISOString() }),
-        );
+        .map(([membreId]) => membreId);
 
-      store.markProcessed(event.id);
+      const created = [];
+      for (const membreId of recipients) {
+        created.push(await store.add({ membreId, offerId, titre, categorie }));
+      }
+      await store.markProcessed(event.id);
       return created;
     },
   };

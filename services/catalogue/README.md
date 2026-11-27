@@ -12,6 +12,8 @@ Produits de la boutique. Port 3001. Détails : [`docs/lots/lot-3-sso.md`](../../
 
 Prix en centimes (entier). Données de départ : `data/products.json`.
 
+**Stockage** : `STORE=memory` (défaut, tests et développement) ou `STORE=postgres` avec `CATALOGUE_DATABASE_URL`. Tables : `db/schema.sql`, créées au démarrage.
+
 ```bash
 npm run dev -w services/catalogue
 npm test -w services/catalogue

@@ -32,12 +32,12 @@ Chaque comparatif a un **banc de test** automatisé qui mesure, provoque des pan
 
 ## 2. Qui s'occupe de quoi
 
-| Lot           | Comparatif                    | Service du POC            | Autres dossiers                                                                                   |
-| ------------- | ----------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------- |
-| **1 — Simon** | Dashboard (pas de comparatif) | —                         | `dashboard/`, `packages/bench-kit/`, `results/schema.json`, `scripts/`, `lancer.bat`, `lancer.sh` |
-| **2**         | CI/CD                         | `services/troc/`          | `.github/workflows/`, `.teamcity/`, `infra/cicd/`, `infra/poc/`, `bench/cicd/`                    |
-| **3**         | SSO                           | `services/catalogue/`     | `services/shared/auth/`, `infra/sso/`, `bench/sso/`                                               |
-| **4**         | Brokers                       | `services/notifications/` | `services/shared/messaging/`, `infra/brokers/`, `bench/brokers/`                                  |
+| Lot           | Comparatif                    | Service du POC            | Autres dossiers                                                                                                                             |
+| ------------- | ----------------------------- | ------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| **1 — Simon** | Dashboard (pas de comparatif) | —                         | `dashboard/`, `packages/bench-kit/`, `services/shared/db/`, `infra/postgres/`, `results/schema.json`, `scripts/`, `lancer.bat`, `lancer.sh` |
+| **2**         | CI/CD                         | `services/troc/`          | `.github/workflows/`, `.teamcity/`, `infra/cicd/`, `infra/poc/`, `bench/cicd/`                                                              |
+| **3**         | SSO                           | `services/catalogue/`     | `services/shared/auth/`, `infra/sso/`, `bench/sso/`                                                                                         |
+| **4**         | Brokers                       | `services/notifications/` | `services/shared/messaging/`, `infra/brokers/`, `bench/brokers/`                                                                            |
 
 Tout le monde a accès à tout le dépôt. Chacun travaille dans sa partie ; pour toucher à celle d'un autre, on prévient son responsable et on le met en relecteur de la pull request (voir `CONTRIBUTING.md`, §7).
 
@@ -64,6 +64,7 @@ Tout le monde a accès à tout le dépôt. Chacun travaille dans sa partie ; pou
                                   └──────────────────────────┘
 
  POC : Troc ──offer.created──▶ broker ──▶ Notifications        Catalogue ◀── jeton SSO
+       Catalogue · Troc · Notifications · Keycloak ──▶ PostgreSQL (une base chacun)
 ```
 
 Les bancs ne parlent **jamais** au dashboard directement : ils écrivent un fichier, le dashboard le lit. Chaque lot avance donc seul dès que le format est figé.
@@ -72,16 +73,17 @@ Les bancs ne parlent **jamais** au dashboard directement : ils écrivent un fich
 
 ## 4. Stack et versions
 
-| Sujet                 | Choix                                                                                            |
-| --------------------- | ------------------------------------------------------------------------------------------------ |
-| Langage               | JavaScript, modules ES (`"type": "module"`), **Node.js 22 LTS** (fixé par `.nvmrc` et `engines`) |
-| API HTTP              | Express                                                                                          |
-| Tests                 | Vitest + Supertest                                                                               |
-| Qualité               | ESLint (règles recommandées) + Prettier, config unique à la racine                               |
-| Conteneurs            | Docker + Docker Compose, un fichier compose par sujet dans `infra/`                              |
-| Dashboard             | HTML, CSS, JavaScript sans framework, graphiques Chart.js (servi en local, pas de CDN)           |
-| Validation du contrat | JSON Schema (draft 2020-12) + `ajv`                                                              |
-| Analyse de code       | SonarQube Cloud (gratuit pour un dépôt public)                                                   |
+| Sujet                 | Choix                                                                                                                                    |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| Langage               | JavaScript, modules ES (`"type": "module"`), **Node.js 24 LTS** (fixé par `.nvmrc` et `engines`)                                         |
+| API HTTP              | Express                                                                                                                                  |
+| Tests                 | Vitest + Supertest                                                                                                                       |
+| Qualité               | ESLint (règles recommandées) + Prettier, config unique à la racine                                                                       |
+| Conteneurs            | Docker + Docker Compose, un fichier compose par sujet dans `infra/`                                                                      |
+| Dashboard             | HTML, CSS, JavaScript sans framework, graphiques Chart.js (servi en local, pas de CDN)                                                   |
+| Validation du contrat | JSON Schema (draft 2020-12) + `ajv`                                                                                                      |
+| Analyse de code       | SonarQube Cloud (gratuit pour un dépôt public)                                                                                           |
+| Base de données       | **PostgreSQL 17**, un seul serveur (`infra/postgres`), une base par service + une pour Keycloak ; client `pg` via `@maison-epouvante/db` |
 
 Le dépôt est un **monorepo npm workspaces** : un seul `npm ci` à la racine installe tout.
 
@@ -97,12 +99,14 @@ maison-epouvante/
 │  ├─ notifications/        lot 4
 │  └─ shared/
 │     ├─ auth/              lot 3 — vérification des jetons SSO
+│     ├─ db/                lot 1 — accès PostgreSQL commun aux services
 │     └─ messaging/         lot 4 — publication / consommation d'événements
 ├─ bench/
 │  ├─ cicd/                 lot 2
 │  ├─ sso/                  lot 3
 │  └─ brokers/              lot 4
 ├─ infra/
+│  ├─ postgres/compose.yml  lot 1 — PostgreSQL partagé (inclus par les autres compose)
 │  ├─ poc/compose.yml       lot 2 — les 3 services ensemble
 │  ├─ cicd/compose.yml      lot 2 — TeamCity
 │  ├─ sso/compose.yml       lot 3 — Keycloak
@@ -139,21 +143,26 @@ maison-epouvante/
 | TeamCity      | 8111                 |
 | Kafka         | 9092                 |
 | RabbitMQ      | 5672 (console 15672) |
+| PostgreSQL    | 5432                 |
 
 ### Variables d'environnement
 
 Toutes déclarées dans `.env.example` (commité, valeurs vides ou par défaut). Les vraies valeurs sont dans `.env` (jamais commité).
 
-| Variable                                     | Valeurs                             | Utilisée par            |
-| -------------------------------------------- | ----------------------------------- | ----------------------- |
-| `BROKER`                                     | `memory` · `kafka` · `rabbitmq`     | services, bench/brokers |
-| `KAFKA_BROKERS`                              | `localhost:9092`                    | messaging               |
-| `RABBITMQ_URL`                               | `amqp://guest:guest@localhost:5672` | messaging               |
-| `SSO`                                        | `none` · `keycloak` · `auth0`       | services, bench/sso     |
-| `SSO_ISSUER`, `SSO_AUDIENCE`, `SSO_JWKS_URI` | URL du fournisseur                  | auth                    |
-| `PORT`                                       | voir tableau des ports              | chaque service          |
+| Variable                                                                    | Valeurs                                                                         | Utilisée par            |
+| --------------------------------------------------------------------------- | ------------------------------------------------------------------------------- | ----------------------- |
+| `BROKER`                                                                    | `memory` · `kafka` · `rabbitmq`                                                 | services, bench/brokers |
+| `KAFKA_BROKERS`                                                             | `localhost:9092`                                                                | messaging               |
+| `RABBITMQ_URL`                                                              | `amqp://guest:guest@localhost:5672`                                             | messaging               |
+| `SSO`                                                                       | `none` · `keycloak` · `auth0`                                                   | services, bench/sso     |
+| `SSO_ISSUER`, `SSO_AUDIENCE`, `SSO_JWKS_URI`                                | URL du fournisseur                                                              | auth                    |
+| `PORT`                                                                      | voir tableau des ports                                                          | chaque service          |
+| `STORE`                                                                     | `memory` · `postgres`                                                           | services                |
+| `CATALOGUE_DATABASE_URL`, `TROC_DATABASE_URL`, `NOTIFICATIONS_DATABASE_URL` | `postgres://maison:maison_dev@localhost:5432/<service>`                         | chaque service          |
+| `POSTGRES_USER`, `POSTGRES_PASSWORD`                                        | identifiants du PostgreSQL local                                                | infra/postgres          |
+| `TEST_POSTGRES_URL`                                                         | `postgres://maison:maison_dev@localhost:5432` (vide = tests PostgreSQL ignorés) | tests                   |
 
-`SSO=none` (pas de vérification de jeton) et `BROKER=memory` (pas de vrai broker) servent **uniquement** au développement et aux tests unitaires. Le code doit refuser `SSO=none` quand `NODE_ENV=production`.
+`SSO=none` (pas de vérification de jeton), `BROKER=memory` (pas de vrai broker) et `STORE=memory` (pas de vraie base) servent **uniquement** au développement et aux tests unitaires. Le code doit refuser `SSO=none` quand `NODE_ENV=production`.
 
 ### Règles pour les 3 services
 
@@ -167,14 +176,33 @@ Toutes déclarées dans `.env.example` (commité, valeurs vides ou par défaut).
   │  ├─ app.js        crée l'app Express (exportée, sans listen → testable)
   │  ├─ server.js     lit l'env, appelle app.listen
   │  ├─ routes/
-  │  └─ store.js      données en mémoire
-  ├─ test/            un fichier de test par route
-  ├─ data/            données de départ (JSON)
+  │  └─ stores/
+  │     ├─ index.js     choisit le stockage selon STORE
+  │     ├─ memory.js    tests unitaires, développement rapide
+  │     └─ postgres.js  POC, bancs, démo
+  ├─ db/schema.sql    tables (CREATE … IF NOT EXISTS, exécuté au démarrage)
+  ├─ test/            un fichier de test par route + stores.test.js (contrat commun aux 2 stockages)
+  ├─ data/            données de départ (JSON), chargées si la table est vide
   ├─ Dockerfile
   └─ package.json
   ```
 - Dockerfile : image `node:24-alpine`, `npm ci --omit=dev`, `USER node` (jamais root), `HEALTHCHECK` sur `/health`.
 - Au moins un test Vitest + Supertest par route, cas d'erreur compris.
+
+### Stockage : mémoire ou PostgreSQL
+
+Chaque service a **deux stockages qui se comportent à l'identique**, vérifiés par la même suite de tests (`test/stores.test.js`) :
+
+| `STORE`    | Quand                                 | Pourquoi                                                                                 |
+| ---------- | ------------------------------------- | ---------------------------------------------------------------------------------------- |
+| `memory`   | Tests unitaires, développement rapide | Aucun prérequis, instantané                                                              |
+| `postgres` | POC (`infra/poc`), bancs, démo        | Données réelles et persistantes, plusieurs exemplaires possibles : des mesures crédibles |
+
+- Démarrer la base en local : `docker compose -f infra/postgres/compose.yml up -d`, puis `STORE=postgres` dans `.env`.
+- **Tous les fichiers compose du projet commencent par `name: maison-epouvante`** et incluent `infra/postgres/compose.yml` au lieu de le recopier : une seule base, pas de conflit sur le port 5432.
+- Les tables sont créées au démarrage du service. Les données de départ ne sont chargées que si la table est vide : un redémarrage conserve les données.
+- Pour lancer aussi les tests PostgreSQL en local, renseigner `TEST_POSTGRES_URL` ; chaque test travaille dans une base jetable. La CI les lance toujours.
+- **Les résultats des bancs restent des fichiers JSON** (§8) : ce sont des comptes rendus de mesure, pas des données de l'application.
 
 ### Événement `offer.created`
 

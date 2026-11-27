@@ -13,6 +13,8 @@ Le `membreId` vient du jeton, jamais du corps.
 
 **Choix documenté** : si la publication de `offer.created` échoue, l'offre n'est pas créée (réponse `503`), pour ne jamais avoir d'offre sans notification possible.
 
+**Stockage** : `STORE=memory` (défaut, tests et développement) ou `STORE=postgres` avec `TROC_DATABASE_URL`. Tables : `db/schema.sql`, créées au démarrage.
+
 ```bash
 npm run dev -w services/troc
 npm test -w services/troc

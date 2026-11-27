@@ -2,15 +2,15 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import request from 'supertest';
 import { createAuth } from '@maison-epouvante/auth';
 import { createApp } from '../src/app.js';
-import { createNotificationStore } from '../src/store.js';
+import { createMemoryNotificationStore } from '../src/stores/memory.js';
 
 const auth = createAuth({ provider: 'none', nodeEnv: 'test' });
 
 let app;
-beforeEach(() => {
-  const store = createNotificationStore();
-  store.add({ membreId: 'm-001', offerId: 'o-1', titre: 'A', categorie: 'bd' });
-  store.add({ membreId: 'm-002', offerId: 'o-2', titre: 'B', categorie: 'bd' });
+beforeEach(async () => {
+  const store = createMemoryNotificationStore();
+  await store.add({ membreId: 'm-001', offerId: 'o-1', titre: 'A', categorie: 'bd' });
+  await store.add({ membreId: 'm-002', offerId: 'o-2', titre: 'B', categorie: 'bd' });
   app = createApp({ auth, store });
 });
 
@@ -38,6 +38,7 @@ describe('GET /notifications', () => {
 describe('GET /health', () => {
   it('answers in the shared health format', async () => {
     const res = await request(app).get('/health');
+    expect(res.status).toBe(200);
     expect(res.body).toEqual({ status: 'ok', service: 'notifications', version: '0.1.0' });
   });
 });

@@ -1,0 +1,37 @@
+# Shared PostgreSQL for the POC: one database per service, plus one for Keycloak.
+# Owner: Lot 1. Used directly for local development, and included by other compose files:
+#
+#   include:
+#     - ../postgres/compose.yml
+#
+# Credentials come from .env (see .env.example). The defaults are for local development only.
+#
+# Every compose file of the project declares `name: maison-epouvante`: they then share this
+# single PostgreSQL instead of starting several ones fighting over port 5432.
+
+name: maison-epouvante
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-maison}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-maison_dev}
+      POSTGRES_DB: postgres
+    ports:
+      - '5432:5432'
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      # Runs only on the very first start (empty volume): creates the per-service databases.
+      - ./init:/docker-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U $${POSTGRES_USER} -d postgres']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    cpus: '2'
+    mem_limit: 1g
+
+volumes:
+  postgres-data:
+    name: maison-epouvante-postgres-data
