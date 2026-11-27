@@ -95,7 +95,7 @@ Options facultatives, utilisées surtout par le banc :
 Conseils :
 
 - Bibliothèques : `@confluentinc/kafka-javascript` (client officiel de Confluent, API compatible `kafkajs`) et `amqplib`. **Choix revu le 2026-11-27** : on n'utilise plus `kafkajs`. Pourquoi, et ce que ça change : voir [« Décisions du lot »](#décisions-du-lot).
-- **Reconnexion** : le client Kafka réessaie tout seul ; `amqplib` non, la connexion perdue est perdue. Écris une reconnexion avec attente progressive (1 s, 2 s, 4 s… pendant 30 s au plus) dans l'adaptateur RabbitMQ, sinon la comparaison des pannes est faussée. Documente ce comportement : c'est un constat en soi (la bibliothèque cliente compte autant que le broker).
+- **Reconnexion** : le client Kafka réessaie tout seul. `amqplib` sait aussi se reconnecter depuis sa version 1.1, mais **seulement si on l'active** (option `recovery`) : sans elle, une connexion perdue est perdue et la comparaison des pannes est faussée. Documente les délais choisis : c'est un constat en soi (la bibliothèque cliente compte autant que le broker). Voir [« Décisions du lot »](#décisions-du-lot).
 - **Valeurs par défaut** : les bibliothèques n'ont pas les mêmes. Côté Kafka, ce sont celles de `librdkafka` (la bibliothèque C du client Confluent) : `acks` vaut par exemple déjà « tous les réplicas » par défaut, mais le producteur n'est pas idempotent. Note dans le README du banc les réglages exacts de chaque mode.
 - Messages en JSON (`Buffer.from(JSON.stringify(event))`).
 - Tests Vitest sur l'adaptateur `memory`, plus un test d'intégration par vrai broker (lancé seulement si le broker répond, sinon ignoré).
@@ -206,6 +206,14 @@ Les choix qui s'écartent de ce fichier, avec leur raison, pour que toute l'équ
 - **Repli** : l'adaptateur est écrit pour que revenir à `kafkajs` se fasse en changeant l'import. Si on doit s'en servir, on le note ici avec la raison, et dans le README du banc.
 
 **Bonus possible pour l'oral** : un lancement de développement avec `kafkajs` chiffrerait l'effet de la bibliothèque cliente sur le débit.
+
+### 2026-11-27 — Reconnexion RabbitMQ : celle d'`amqplib`, pas une maison
+
+**Le problème.** Ce fichier disait qu'`amqplib` ne se reconnecte pas et demandait d'écrire une reconnexion à la main. C'était vrai des anciennes versions (0.10.x). Depuis la 1.1, `amqplib` a sa propre reconnexion, à activer avec l'option `recovery` ; on utilise la 2.4.2.
+
+**Décision.** On active celle d'`amqplib`, pour la même raison que le choix du client Kafka : tester le client tel qu'on l'utiliserait en production. Délais : 1, 2, 4, 8, 8 s (environ 23 s), sans aléa pour que les lancements restent reproductibles.
+
+**Vérifié le 2026-11-27** : broker tué avec `docker kill`, relancé 10 s plus tard. Troc et Notifications se reconnectent seuls ; l'offre créée pendant la coupure attend la reconnexion (14 s) puis est bien notifiée. Détail des réglages : `services/shared/messaging/README.md`.
 
 ---
 
