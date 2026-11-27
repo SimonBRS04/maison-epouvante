@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import request from 'supertest';
 import { createAuth } from '@maison-epouvante/auth';
 import { createApp } from '../src/app.js';
-import { createOfferStore } from '../src/store.js';
+import { createMemoryOfferStore } from '../src/stores/memory.js';
 
 const auth = createAuth({ provider: 'none', nodeEnv: 'test' });
 const seed = [
@@ -31,7 +31,11 @@ let app;
 let publisher;
 beforeEach(() => {
   publisher = { publish: vi.fn(async () => {}) };
-  app = createApp({ auth, publisher, store: createOfferStore(structuredClone(seed)) });
+  app = createApp({
+    auth,
+    publisher,
+    store: createMemoryOfferStore({ seed: structuredClone(seed) }),
+  });
 });
 
 describe('GET /offers', () => {
@@ -107,6 +111,7 @@ describe('POST /offers', () => {
 describe('GET /health', () => {
   it('answers in the shared health format', async () => {
     const res = await request(app).get('/health');
+    expect(res.status).toBe(200);
     expect(res.body).toEqual({ status: 'ok', service: 'troc', version: '0.1.0' });
   });
 });

@@ -5,24 +5,24 @@ import { validateProduct } from '../validation.js';
 export function productsRouter({ store, auth }) {
   const router = Router();
 
-  router.get('/', (req, res) => {
-    res.json(store.list({ categorie: req.query.categorie }));
+  router.get('/', async (req, res) => {
+    res.json(await store.list({ categorie: req.query.categorie }));
   });
 
-  router.get('/:id', (req, res) => {
-    const product = store.get(req.params.id);
+  router.get('/:id', async (req, res) => {
+    const product = await store.get(req.params.id);
     if (!product) return sendError(res, 404, 'INTROUVABLE', 'Produit introuvable.');
     return res.json(product);
   });
 
-  router.post('/', auth.requireRole('moderateur'), (req, res) => {
+  router.post('/', auth.requireRole('moderateur'), async (req, res) => {
     const { value, error } = validateProduct(req.body);
     if (error) return sendError(res, 400, 'VALIDATION', error);
-    return res.status(201).json(store.add(value));
+    return res.status(201).json(await store.add(value));
   });
 
-  router.delete('/:id', auth.requireRole('moderateur'), (req, res) => {
-    if (!store.remove(req.params.id)) {
+  router.delete('/:id', auth.requireRole('moderateur'), async (req, res) => {
+    if (!(await store.remove(req.params.id))) {
       return sendError(res, 404, 'INTROUVABLE', 'Produit introuvable.');
     }
     return res.status(204).end();

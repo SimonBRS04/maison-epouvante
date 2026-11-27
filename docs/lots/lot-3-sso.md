@@ -19,7 +19,8 @@ Le client a fait de la sécurité une **contrainte forte** : c'est une plateform
 
 - **`services/shared/auth`** : l'interface définitive (`createAuth`, `requireAuth`, `requireRole`), le mode `none` (en-têtes `X-Dev-User` et `X-Dev-Roles` pour les tests), le refus de `none` en production, l'en-tête `Server-Timing`, 7 tests. **Les 3 services l'utilisent déjà : ne change pas l'interface.**
 - **Ce qui te reste dans ce module** : les modes `keycloak` et `auth0`. Ajoute un fichier `src/providers/jwt.js` (vérification avec `jose`, extraction des rôles par fournisseur) et branche-le dans `selectVerifier()` de `src/index.js`. Un jeton refusé lève une `AuthError('JETON_INVALIDE', …)`, qui est déjà transformée en `401`.
-- **Service Catalogue** complet pour démarrer : les 5 routes, la validation, 10 produits de départ, 11 tests, le Dockerfile, le README. Il est dans ta partie.
+- **Service Catalogue** complet pour démarrer : les 5 routes, la validation, 10 produits de départ, les deux stockages (mémoire et PostgreSQL, choisis par `STORE`), les tests, le Dockerfile, le README. Il est dans ta partie.
+- **La base `keycloak`** existe déjà dans le PostgreSQL partagé (`infra/postgres`) : Keycloak n'a plus qu'à s'y brancher (partie C).
 - `infra/sso/` et `bench/sso/` : vides, à toi de jouer.
 
 ## Ta partie du dépôt
@@ -128,6 +129,8 @@ Les produits de la boutique, ceux qu'on trouve aussi en magasin.
 Conseils :
 
 - `infra/sso/compose.yml` : image `quay.io/keycloak/keycloak` à **version épinglée**, commande `start-dev --import-realm`, dossier `infra/sso/realm/` monté sur `/opt/keycloak/data/import`. Les noms des variables d'administrateur et de santé ont changé selon les versions : vérifie-les dans la doc de **ta** version.
+- `name: maison-epouvante` en tête de `infra/sso/compose.yml`, comme tous les compose du projet : ils partagent ainsi un seul PostgreSQL.
+- **Keycloak sur PostgreSQL**, pas sur sa base interne de développement : inclure `../postgres/compose.yml` (`include:`), puis `KC_DB=postgres`, `KC_DB_URL=jdbc:postgresql://postgres:5432/keycloak`, `KC_DB_USERNAME` et `KC_DB_PASSWORD` (depuis `.env`), et `depends_on: postgres: condition: service_healthy`. C'est la configuration réaliste qui rend la comparaison avec Auth0 crédible.
 - **Exporter le realm** avec ses utilisateurs : l'export partiel de la console n'inclut pas les utilisateurs. Utilise la commande `kc.sh export --realm maison-epouvante --users realm_file` dans le conteneur, puis commite le fichier. Mots de passe de test uniquement.
 - Auth0 se configure à la main : note **chaque clic** dans `bench/sso/README.md`, pour que n'importe qui puisse refaire la configuration.
 - Le flux « mot de passe » est déconseillé en production (OAuth 2.1). On l'utilise seulement parce qu'il s'automatise sans navigateur. C'est une limite à citer, pas à cacher.
@@ -138,7 +141,7 @@ Conseils :
 
 ### Protocole
 
-- `infra/sso/compose.yml` lance aussi une instance du Catalogue **dédiée au banc**, avec `cap_add: NET_ADMIN` et `iptables` installé. Elle ne sert jamais ailleurs.
+- `infra/sso/compose.yml` lance aussi une instance du Catalogue **dédiée au banc**, avec `cap_add: NET_ADMIN` et `iptables` installé, en `STORE=postgres`. Elle ne sert jamais ailleurs. La base est la même pour les deux fournisseurs : l'écart mesuré reste dû au SSO.
 - **Couper le fournisseur de façon identique pour les deux** : `docker exec <catalogue> iptables -A OUTPUT -p tcp --dport <port du fournisseur> -j DROP` (443 pour Auth0, 8080 pour Keycloak). Le service reste joignable depuis le banc, mais ne peut plus contacter le fournisseur. On retire la règle avec `-D` à la fin du scénario.
 - Le banc lance d'abord tous les scénarios avec Keycloak (`SSO=keycloak`), puis avec Auth0 (`SSO=auth0`).
 - La latence réseau vers chaque fournisseur est mesurée et publiée : elle explique une partie de l'écart.
@@ -211,4 +214,4 @@ Montre comment chaque axe s'insère dans le cycle DevSecOps du Lot 2.
 
 ## Prompt de départ pour ton IA
 
-> Je travaille sur un projet étudiant (monorepo Node.js 22, modules ES, Express, Vitest, Docker). Je te joins `docs/socle-commun.md` (conventions et contrat de données, qui font foi) et `docs/lots/lot-3-sso.md` (ma mission). Respecte strictement le socle et `CONTRIBUTING.md`. Commence par le workspace `services/shared/auth` : l'interface `createAuth` / `requireRole` exactement comme décrite, le mode `none`, la vérification avec `jose`, et des tests Vitest qui signent leurs propres jetons. Code propre ; code, commentaires et noms de tests en anglais (voir CONTRIBUTING.md, « Code et langue »).
+> Je travaille sur un projet étudiant (monorepo Node.js 24, modules ES, Express, Vitest, Docker). Je te joins `docs/socle-commun.md` (conventions et contrat de données, qui font foi) et `docs/lots/lot-3-sso.md` (ma mission). Respecte strictement le socle et `CONTRIBUTING.md`. Commence par le workspace `services/shared/auth` : l'interface `createAuth` / `requireRole` exactement comme décrite, le mode `none`, la vérification avec `jose`, et des tests Vitest qui signent leurs propres jetons. Code propre ; code, commentaires et noms de tests en anglais (voir CONTRIBUTING.md, « Code et langue »).

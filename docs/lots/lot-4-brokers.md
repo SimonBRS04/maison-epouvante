@@ -19,7 +19,7 @@ Ton comparatif compte pour la démonstration « 2 technologies pour l'applicatio
 
 - **`services/shared/messaging`** : l'interface définitive (`createPublisher`, `createSubscriber`), l'adaptateur `memory` (copie par groupe, partage dans un groupe, redistribution sur erreur, sérialisation JSON), 7 tests. **Troc et Notifications l'utilisent déjà : ne change pas l'interface.**
 - **Ce qui te reste dans ce module** : les adaptateurs `src/adapters/kafka.js` et `src/adapters/rabbitmq.js`, branchés dans `createPublisher()` et `createSubscriber()` de `src/index.js`, avec les options `secure`, `fromBeginning`, `prefetch`. **Priorité : RabbitMQ d'abord**, car le Lot 2 en a besoin pour `infra/poc` au J3.
-- **Service Notifications** complet pour démarrer : la consommation de `offer.created`, les centres d'intérêt, l'idempotence, la route, 7 tests, le Dockerfile, le README. Il est dans ta partie.
+- **Service Notifications** complet pour démarrer : la consommation de `offer.created`, les centres d'intérêt, l'idempotence, la route, les deux stockages (mémoire et PostgreSQL, choisis par `STORE`), les tests, le Dockerfile, le README. Il est dans ta partie.
 - `infra/brokers/` et `bench/brokers/` : vides, à toi de jouer.
 
 ## Ta partie du dépôt
@@ -112,7 +112,7 @@ Il prévient les membres quand un article lié à leurs centres d'intérêt est 
 | `GET /notifications` | rôle `membre` | les notifications du membre connecté (`req.user.id`). Un `moderateur` voit tout, avec un filtre `?membreId=` |
 
 - Consomme `offer.created` (groupe `notifications`). Pour chaque membre dont les centres d'intérêt (`data/interests.json` : `{ "m-001": ["figurines", "bd"], … }`) contiennent la catégorie de l'offre, sauf l'auteur de l'offre, il crée une notification : `{ id, membreId, offerId, titre, creeA, lue: false }`.
-- **Idempotence** : les deux brokers peuvent livrer un message deux fois. Garde en mémoire les `id` d'événements déjà traités et ignore les doublons. C'est la parade aux doublons que ton banc va montrer : explique-le à l'oral.
+- **Idempotence** (déjà en place) : les deux brokers peuvent livrer un message deux fois. Le stockage enregistre l'`id` de chaque événement traité (table `processed_events` en PostgreSQL) et ignore les doublons. C'est la parade aux doublons que ton banc va montrer : explique-le à l'oral.
 - Données en mémoire.
 
 ---
@@ -121,7 +121,7 @@ Il prévient les membres quand un article lié à leurs centres d'intérêt est 
 
 ### Infrastructure
 
-- `infra/brokers/compose.yml`, versions **épinglées** :
+- `infra/brokers/compose.yml`, avec `name: maison-epouvante` en tête comme tous les compose du projet, versions **épinglées** :
   - Kafka : image `apache/kafka`, mode KRaft (sans ZooKeeper), un seul nœud.
   - RabbitMQ : image `rabbitmq:<version>-management`, console sur le port 15672.
 - Ressources : `cpus: "2"`, `mem_limit: 2g` pour chacun.
@@ -253,4 +253,4 @@ Les choix qui s'écartent de ce fichier, avec leur raison, pour que toute l'équ
 
 ## Prompt de départ pour ton IA
 
-> Je travaille sur un projet étudiant (monorepo Node.js 22, modules ES, Express, Vitest, Docker). Je te joins `docs/socle-commun.md` (conventions et contrat de données, qui font foi) et `docs/lots/lot-4-brokers.md` (ma mission). Respecte strictement le socle et `CONTRIBUTING.md`. Commence par le workspace `services/shared/messaging` : l'interface `createPublisher` / `createSubscriber` exactement comme décrite, l'adaptateur `memory` et ses tests Vitest. Code propre ; code, commentaires et noms de tests en anglais (voir CONTRIBUTING.md, « Code et langue »).
+> Je travaille sur un projet étudiant (monorepo Node.js 24, modules ES, Express, Vitest, Docker). Je te joins `docs/socle-commun.md` (conventions et contrat de données, qui font foi) et `docs/lots/lot-4-brokers.md` (ma mission). Respecte strictement le socle et `CONTRIBUTING.md`. Commence par le workspace `services/shared/messaging` : l'interface `createPublisher` / `createSubscriber` exactement comme décrite, l'adaptateur `memory` et ses tests Vitest. Code propre ; code, commentaires et noms de tests en anglais (voir CONTRIBUTING.md, « Code et langue »).

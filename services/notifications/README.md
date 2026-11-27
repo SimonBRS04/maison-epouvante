@@ -11,6 +11,8 @@ Consomme `offer.created` (groupe `notifications`). Centres d'intérêt : `data/i
 
 **Idempotence** : un événement déjà traité (même `id`) est ignoré, car les brokers livrent « au moins une fois ».
 
+**Stockage** : `STORE=memory` (défaut, tests et développement) ou `STORE=postgres` avec `NOTIFICATIONS_DATABASE_URL`. Tables : `db/schema.sql`, créées au démarrage.
+
 ```bash
 npm run dev -w services/notifications
 npm test -w services/notifications

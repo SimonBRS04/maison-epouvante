@@ -17,7 +17,7 @@ Un POC de 3 microservices sert de terrain d'essai à 3 comparatifs de technologi
 
 ## Démarrer
 
-Prérequis : Node.js 22, Docker Desktop.
+Prérequis : Node.js 24, Docker Desktop.
 
 ```bash
 npm ci
@@ -26,13 +26,22 @@ npm run lint
 npm test
 ```
 
-Lancer un service en local (mode développement : `SSO=none`, `BROKER=memory`) :
+Lancer un service en local (mode développement : `SSO=none`, `BROKER=memory`, `STORE=memory`) :
 
 ```bash
 npm run start:catalogue      # http://localhost:3001/products
 npm run start:troc           # http://localhost:3002/offers
 npm run start:notifications  # http://localhost:3003/notifications
 ```
+
+Avec une vraie base PostgreSQL (comme pour le POC, les bancs et la démo) :
+
+```bash
+docker compose -f infra/postgres/compose.yml up -d   # une base par service + une pour Keycloak
+# puis STORE=postgres dans .env, et npm run start:… comme ci-dessus
+```
+
+Lancer aussi les tests PostgreSQL : renseigner `TEST_POSTGRES_URL` dans l'environnement (la CI le fait toujours).
 
 Construire une image (toujours depuis la racine) :
 

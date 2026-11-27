@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import request from 'supertest';
 import { createAuth } from '@maison-epouvante/auth';
 import { createApp } from '../src/app.js';
-import { createProductStore } from '../src/store.js';
+import { createMemoryProductStore } from '../src/stores/memory.js';
 
 const auth = createAuth({ provider: 'none', nodeEnv: 'test' });
 const seed = [
@@ -27,7 +27,7 @@ const newProduct = { nom: 'Mug', categorie: 'goodies', prix: 1290, stock: 10 };
 
 let app;
 beforeEach(() => {
-  app = createApp({ auth, store: createProductStore(structuredClone(seed)) });
+  app = createApp({ auth, store: createMemoryProductStore({ seed: structuredClone(seed) }) });
 });
 
 describe('GET /products', () => {

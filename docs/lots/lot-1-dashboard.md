@@ -18,19 +18,21 @@ Le dashboard **est la démonstration**. Les 6 points de démo de la grille se jo
 ## Déjà en place dans le squelette
 
 - Le monorepo : workspaces npm, ESLint + Prettier (`npm run lint` vérifie les deux), `.gitignore` (dont `.env`), `.gitattributes`, `.env.example`, la CI minimale, les règles GitHub.
-- Les 3 services et les 2 modules partagés en version de départ (41 tests verts).
+- Les 3 services et les modules partagés en version de départ, avec leurs deux stockages (mémoire et PostgreSQL).
 - `dashboard/`, `packages/`, `results/`, `fixtures/` : vides, à toi de jouer. Tes workspaces (`dashboard`, `packages/bench-kit`) sont déjà déclarés dans le `package.json` racine : il suffit de leur créer un `package.json`.
 
 ## Ta partie du dépôt
 
-| Dossier / fichier             | Rôle                                                                                |
-| ----------------------------- | ----------------------------------------------------------------------------------- |
-| `results/schema.json`         | Le contrat v1, en JSON Schema                                                       |
-| `packages/bench-kit/`         | `@maison-epouvante/bench-kit` : les fonctions communes aux 3 bancs (voir socle, §7) |
-| `scripts/validate-results.js` | `npm run validate:results` : vérifie `results/`, `results-dev/` et `fixtures/`      |
-| `dashboard/`                  | Serveur Express + page web                                                          |
-| `lancer.bat`, `lancer.sh`     | Le double-clic du jour J                                                            |
-| `docs/schemas/`               | Tes schémas de la soutenance                                                        |
+| Dossier / fichier             | Rôle                                                                                                            |
+| ----------------------------- | --------------------------------------------------------------------------------------------------------------- |
+| `results/schema.json`         | Le contrat v1, en JSON Schema                                                                                   |
+| `packages/bench-kit/`         | `@maison-epouvante/bench-kit` : les fonctions communes aux 3 bancs (voir socle, §7)                             |
+| `scripts/validate-results.js` | `npm run validate:results` : vérifie `results/`, `results-dev/` et `fixtures/`                                  |
+| `dashboard/`                  | Serveur Express + page web                                                                                      |
+| `services/shared/db/`         | `@maison-epouvante/db` : accès PostgreSQL commun aux 3 services (connexion, transactions, santé, bases de test) |
+| `infra/postgres/`             | Le PostgreSQL partagé (une base par service + une pour Keycloak), inclus par les autres compose                 |
+| `lancer.bat`, `lancer.sh`     | Le double-clic du jour J                                                                                        |
+| `docs/schemas/`               | Tes schémas de la soutenance                                                                                    |
 
 ---
 
@@ -207,4 +209,4 @@ Vitest sur les fonctions pures (`format.js`, `compare.js`, le dépôt de résult
 
 ## Prompt de départ pour ton IA
 
-> Je développe le dashboard d'un projet étudiant (monorepo Node.js 22, modules ES, Express, Vitest, page web sans framework avec Chart.js). Je te joins `docs/socle-commun.md` (le contrat de données, qui fait foi) et `docs/lots/lot-1-dashboard.md` (ma mission). Respecte strictement les conventions du socle et de `CONTRIBUTING.md`. Commence par `results/schema.json` et le workspace `packages/bench-kit` (les 6 fonctions décrites dans le socle), avec leurs tests. Code propre, fonctions courtes ; code, commentaires et noms de tests en anglais (voir CONTRIBUTING.md, « Code et langue »).
+> Je développe le dashboard d'un projet étudiant (monorepo Node.js 24, modules ES, Express, Vitest, page web sans framework avec Chart.js). Je te joins `docs/socle-commun.md` (le contrat de données, qui fait foi) et `docs/lots/lot-1-dashboard.md` (ma mission). Respecte strictement les conventions du socle et de `CONTRIBUTING.md`. Commence par `results/schema.json` et le workspace `packages/bench-kit` (les 6 fonctions décrites dans le socle), avec leurs tests. Code propre, fonctions courtes ; code, commentaires et noms de tests en anglais (voir CONTRIBUTING.md, « Code et langue »).

@@ -1,0 +1,15 @@
+{
+  "name": "@maison-epouvante/db",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Thin PostgreSQL helper shared by the services: pool, transactions, schema, test databases (Lot 1)",
+  "type": "module",
+  "main": "src/index.js",
+  "exports": "./src/index.js",
+  "scripts": {
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "pg": "^8.16.0"
+  }
+}
