@@ -1,0 +1,62 @@
+# Kafka + RabbitMQ for the "brokers" benchmark (Lot 4). Measure one broker at a time:
+#   docker compose -f infra/brokers/compose.yml up -d rabbitmq
+# Pinned versions and equal resources (socle commun, section 7) keep official runs comparable.
+# No volume: `down` wipes everything, while `docker kill` + `docker start` keeps the
+# persisted messages (crash scenarios).
+
+name: maison-epouvante-brokers
+
+services:
+  kafka:
+    image: apache/kafka:4.4.0
+    container_name: brokers-kafka
+    hostname: kafka
+    ports:
+      - '9092:9092'
+    cpus: '2'
+    mem_limit: 2g
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      # Clients reconnect to the advertised address: the host needs localhost:9092, the
+      # containers kafka:29092. With a single listener, one side fails "mysteriously".
+      KAFKA_LISTENERS: HOST://:9092,DOCKER://:29092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: HOST://localhost:9092,DOCKER://kafka:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: HOST:PLAINTEXT,DOCKER:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: DOCKER
+      # Internal topics default to 3 replicas, impossible on a single node.
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      # An auto-created topic gets 1 partition and breaks the ordering scenarios: the
+      # benchmark creates "offers" with 3 partitions itself.
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
+    healthcheck:
+      test:
+        [
+          'CMD-SHELL',
+          '/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 > /dev/null',
+        ]
+      interval: 5s
+      timeout: 10s
+      retries: 20
+      start_period: 10s
+
+  rabbitmq:
+    image: rabbitmq:4.4.1-management
+    container_name: brokers-rabbitmq
+    # RabbitMQ names its node and its data folder after the hostname: keep it stable.
+    hostname: rabbitmq
+    ports:
+      - '5672:5672'
+      - '15672:15672' # management console
+    cpus: '2'
+    mem_limit: 2g
+    healthcheck:
+      test: ['CMD', 'rabbitmq-diagnostics', '-q', 'ping']
+      interval: 5s
+      timeout: 10s
+      retries: 20
+      start_period: 10s
