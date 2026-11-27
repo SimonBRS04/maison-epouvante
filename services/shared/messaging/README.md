@@ -22,16 +22,16 @@ await subscriber.subscribe('offers', async (event) => {
 
 ## RabbitMQ : réglages exacts
 
-| Élément               | Valeur                                                                                                    |
-| --------------------- | --------------------------------------------------------------------------------------------------------- |
-| URL                   | `RABBITMQ_URL` (défaut `amqp://guest:guest@localhost:5672`)                                               |
-| Topologie             | exchange `<topic>` de type `topic`, durable ; file durable `<topic>.<group>` liée avec `#`                |
-| Mode par défaut       | canal simple, messages **non persistants** (`deliveryMode: 1`), pas de confirmation du broker             |
-| `secure: true`        | canal à confirmations (`publish` attend l'accusé du broker), messages **persistants** (`deliveryMode: 2`) |
-| `prefetch: n`         | `n` messages non acquittés au plus par consommateur ; illimité par défaut                                 |
-| `fromBeginning`       | sans effet : une file classique ne garde rien de ce qui précède sa création                               |
-| Acquittement          | `ack` après le traitement ; erreur du traitement → `nack` avec remise en file                             |
-| Message JSON invalide | rejeté sans remise en file (sinon il boucle à l'infini), et journalisé                                    |
+| Élément               | Valeur                                                                                                                                                                                    |
+| --------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| URL                   | `RABBITMQ_URL` (défaut `amqp://guest:guest@localhost:5672`)                                                                                                                               |
+| Topologie             | exchange `<topic>` de type `topic`, durable ; file durable `<topic>.<group>` liée avec `#` ; file `<topic>.<group>.rejets` pour les messages mis de côté                                  |
+| Mode par défaut       | canal simple, messages **non persistants** (`deliveryMode: 1`), pas de confirmation du broker                                                                                             |
+| `secure: true`        | canal à confirmations (`publish` attend l'accusé du broker), messages **persistants** (`deliveryMode: 2`)                                                                                 |
+| `prefetch: n`         | `n` messages non acquittés au plus par consommateur ; illimité par défaut                                                                                                                 |
+| `fromBeginning`       | sans effet : une file classique ne garde rien de ce qui précède sa création                                                                                                               |
+| Acquittement          | `ack` après le traitement ; erreur du traitement → `nack` avec remise en file, **5 tentatives au plus** (comme l'adaptateur `memory`), puis le message part dans `<topic>.<group>.rejets` |
+| Message JSON invalide | envoyé tout de suite dans `<topic>.<group>.rejets` (il ne pourra jamais être traité), et journalisé                                                                                       |
 
 ## Comportements à connaître
 
@@ -39,7 +39,7 @@ await subscriber.subscribe('offers', async (event) => {
 - **Pendant une coupure**, `publish()` **attend** la reconnexion au lieu d'échouer. Vérifié le 2026-11-27 : broker tué avec `docker kill`, relancé 10 s plus tard ; l'offre créée pendant la coupure a mis 14 s à répondre `201`, et sa notification est bien arrivée. Si la reconnexion échoue, `publish()` lève une erreur (Troc répond alors `503`).
 - **Un message à la fois par abonné** : `amqplib` n'attend pas la fin d'un traitement asynchrone avant de livrer le suivant. L'adaptateur les enchaîne, comme Kafka, pour que le désordre mesuré par le banc vienne du broker et des consommateurs concurrents, pas de notre code.
 - **Au moins une fois** : un message traité mais pas encore acquitté au moment d'une coupure est relivré. D'où l'idempotence du service Notifications.
-- **Limite** : les files classiques ne comptent pas les livraisons. Un traitement qui échoue toujours fait boucler son message. Les files _quorum_ ont une limite de livraisons : piste d'amélioration à citer.
+- **Messages mis de côté** : les files classiques ne comptent pas les livraisons, donc l'adaptateur compte lui-même les échecs de chaque message (limite commune aux adaptateurs : `MAX_DELIVERIES` dans `src/deliveries.js`). Au-delà, le message n'est pas perdu : il est déplacé dans `<topic>.<group>.rejets` (mécanisme _dead letter_ de RabbitMQ), où on peut le lire dans la console. Limite : le compte est tenu par processus, donc avec des consommateurs concurrents dans plusieurs processus, chacun peut faire ses 5 essais. Les files _quorum_ comptent les livraisons côté broker : piste d'amélioration, non retenue ici car on compare les files classiques.
 - Chaque connexion porte un nom visible dans la console RabbitMQ (onglet _Connections_), par exemple `maison-epouvante/subscriber/notifications (pid 4242)`.
 
 ## Tests

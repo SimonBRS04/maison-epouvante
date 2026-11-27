@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import net from 'node:net';
 import amqp from 'amqplib';
 import { afterAll, afterEach, describe, expect, it, vi } from 'vitest';
+import { MAX_DELIVERIES } from '../src/deliveries.js';
 import { createPublisher, createSubscriber } from '../src/index.js';
 
 const URL = process.env.RABBITMQ_URL ?? 'amqp://guest:guest@localhost:5672';
@@ -44,7 +45,7 @@ describe.skipIf(!brokerUp)('rabbitmq adapter against a real broker', () => {
       ...options,
     });
     opened.push(sub);
-    queues.push(`${topic}.${group}`);
+    queues.push(`${topic}.${group}`, `${topic}.${group}.rejets`);
     await sub.subscribe(topic, handler);
     return sub;
   }
@@ -56,6 +57,7 @@ describe.skipIf(!brokerUp)('rabbitmq adapter against a real broker', () => {
   }
 
   afterEach(async () => {
+    vi.restoreAllMocks();
     await Promise.allSettled(opened.splice(0).map((client) => client.close()));
   });
 
@@ -111,6 +113,28 @@ describe.skipIf(!brokerUp)('rabbitmq adapter against a real broker', () => {
     await (await publisher()).publish(topic, { id: 'e-1' });
 
     await vi.waitFor(() => expect(handler).toHaveBeenCalledTimes(3));
+  });
+
+  it('sets a message aside after the last failed attempt instead of retrying forever', async () => {
+    const topic = newTopic();
+    vi.spyOn(console, 'error').mockImplementation(() => {});
+    const handler = vi.fn(async () => {
+      throw new Error('always fails');
+    });
+    await subscriber(topic, 'g', handler);
+
+    await (await publisher()).publish(topic, { id: 'e-poison' });
+
+    const probe = await amqp.connect(URL);
+    const channel = await probe.createChannel();
+    let parked;
+    await vi.waitFor(async () => {
+      parked = await channel.get(`${topic}.g.rejets`, { noAck: true });
+      expect(parked).toBeTruthy();
+    });
+    expect(JSON.parse(parked.content)).toEqual({ id: 'e-poison' });
+    expect(handler).toHaveBeenCalledTimes(MAX_DELIVERIES);
+    await probe.close();
   });
 
   it('handles the messages of one subscriber one at a time, in order', async () => {

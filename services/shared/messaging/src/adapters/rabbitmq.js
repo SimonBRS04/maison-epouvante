@@ -4,12 +4,14 @@
  *   - one durable `topic` exchange per topic (`offers`);
  *   - one durable queue per group (`offers.<group>`) bound to it with `#`:
  *     same group = competing consumers on one queue, different groups = one copy each;
- *   - a handler that throws gets its message nacked and requeued (redelivery).
+ *   - a handler that throws gets its message nacked and requeued (redelivery), at most
+ *     MAX_DELIVERIES times; then the message goes to `offers.<group>.rejets`.
  *
  * Reconnection uses amqplib's own recovery (opt-in since amqplib 1.1): we test the client
  * the way it would run in production instead of hand-written retry code.
  */
 import amqp from 'amqplib';
+import { MAX_DELIVERIES } from '../deliveries.js';
 
 const DEFAULT_URL = 'amqp://guest:guest@localhost:5672';
 
@@ -156,9 +158,22 @@ async function openChannel({
 /** Declares the topology of a group, then consumes its queue one message at a time. */
 async function consume(channel, group, { topic, handler }) {
   const queue = `${topic}.${group}`;
+  const rejects = `${queue}.rejets`;
   await channel.assertExchange(topic, 'topic', { durable: true });
-  await channel.assertQueue(queue, { durable: true });
+  await channel.assertQueue(rejects, { durable: true });
+  // A message nacked without requeue is moved to `rejects` (through the default exchange)
+  // instead of being lost: it can be inspected in the console and replayed by hand.
+  await channel.assertQueue(queue, {
+    durable: true,
+    deadLetterExchange: '',
+    deadLetterRoutingKey: rejects,
+  });
   await channel.bindQueue(queue, topic, '#');
+
+  // Classic queues do not count deliveries, so a handler that always fails would get the
+  // same message forever: the adapter counts the attempts itself. The count lives in this
+  // process, so with competing consumers in several processes the limit applies to each.
+  const attempts = new Map();
 
   // amqplib does not wait for an async callback: chaining keeps one message in progress per
   // subscriber, like Kafka's eachMessage. Any disorder the benchmark measures then comes
@@ -166,25 +181,39 @@ async function consume(channel, group, { topic, handler }) {
   let tail = Promise.resolve();
   await channel.consume(queue, (delivery) => {
     if (delivery === null) return; // consumer cancelled by the broker (queue deleted)
-    tail = tail.then(() => handleDelivery(channel, delivery, handler));
+    tail = tail.then(() => handleDelivery(channel, delivery, handler, { attempts, rejects }));
   });
 }
 
-async function handleDelivery(channel, delivery, handler) {
+async function handleDelivery(channel, delivery, handler, { attempts, rejects }) {
+  const content = delivery.content.toString('utf8');
   let event;
   try {
-    event = JSON.parse(delivery.content.toString('utf8'));
+    event = JSON.parse(content);
   } catch (error) {
-    // Requeuing a message that can never be parsed would loop forever: drop it.
-    console.error('[messaging:rabbitmq] dropped a message that is not valid JSON:', error.message);
+    // Requeuing a message that can never be parsed would loop forever: set it aside at once.
+    console.error(`[messaging:rabbitmq] invalid JSON moved to ${rejects}:`, error.message);
     return settle(() => channel.nack(delivery, false, false));
   }
+
+  const key = typeof event?.id === 'string' ? event.id : content;
   try {
     await handler(event);
+    attempts.delete(key);
     settle(() => channel.ack(delivery));
-  } catch {
-    // Classic queues do not count deliveries: a handler that always fails is retried forever.
-    settle(() => channel.nack(delivery, false, true));
+  } catch (error) {
+    const failures = (attempts.get(key) ?? 0) + 1;
+    if (failures < MAX_DELIVERIES) {
+      attempts.set(key, failures);
+      settle(() => channel.nack(delivery, false, true));
+    } else {
+      attempts.delete(key);
+      console.error(
+        `[messaging:rabbitmq] message moved to ${rejects} after ${failures} failed attempts:`,
+        error.message,
+      );
+      settle(() => channel.nack(delivery, false, false));
+    }
   }
 }
 
