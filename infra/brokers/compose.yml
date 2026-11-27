@@ -1,13 +1,8 @@
-# Kafka + RabbitMQ for the "brokers" benchmark — owner: Lot 4.
-#
-#   docker compose -f infra/brokers/compose.yml up -d            both brokers
-#   docker compose -f infra/brokers/compose.yml up -d rabbitmq   one broker only (fair measurement)
-#   docker compose -f infra/brokers/compose.yml down             stop and wipe everything
-#
-# Versions are pinned so that two official runs always compare the same software.
-# Same resources for both brokers (socle commun, section 7): 2 CPUs, 2 GB of memory.
-# No volume on purpose: `down` gives a clean broker, while `docker kill` + `docker start`
-# keeps the container filesystem, so persisted messages survive a simulated crash.
+# Kafka + RabbitMQ for the "brokers" benchmark (Lot 4). Measure one broker at a time:
+#   docker compose -f infra/brokers/compose.yml up -d rabbitmq
+# Pinned versions and equal resources (socle commun, section 7) keep official runs comparable.
+# No volume: `down` wipes everything, while `docker kill` + `docker start` keeps the
+# persisted messages (crash scenarios).
 
 name: maison-epouvante-brokers
 
@@ -21,14 +16,12 @@ services:
     cpus: '2'
     mem_limit: 2g
     environment:
-      # Single node in KRaft mode: the same process is broker and controller (no ZooKeeper).
       KAFKA_NODE_ID: 1
       KAFKA_PROCESS_ROLES: broker,controller
       KAFKA_CONTROLLER_QUORUM_VOTERS: 1@localhost:9093
       KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
-      # Two advertised listeners: the client connects, then reconnects to the advertised
-      # address. The host (benchmark) must get localhost:9092, the containers kafka:29092.
-      # With a single listener, one side connects and then fails "mysteriously".
+      # Clients reconnect to the advertised address: the host needs localhost:9092, the
+      # containers kafka:29092. With a single listener, one side fails "mysteriously".
       KAFKA_LISTENERS: HOST://:9092,DOCKER://:29092,CONTROLLER://:9093
       KAFKA_ADVERTISED_LISTENERS: HOST://localhost:9092,DOCKER://kafka:29092
       KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: HOST:PLAINTEXT,DOCKER:PLAINTEXT,CONTROLLER:PLAINTEXT
@@ -37,8 +30,8 @@ services:
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-      # An auto-created topic gets 1 partition and silently breaks the ordering scenarios:
-      # the "offers" topic (3 partitions) is created explicitly by the benchmark instead.
+      # An auto-created topic gets 1 partition and breaks the ordering scenarios: the
+      # benchmark creates "offers" with 3 partitions itself.
       KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'false'
     healthcheck:
       test:
