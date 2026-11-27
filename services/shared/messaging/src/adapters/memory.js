@@ -7,7 +7,7 @@
  *   - the message is serialised to JSON, as on the network.
  * Does not cross processes or containers: development and tests only.
  */
-const MAX_DELIVERIES = 5;
+import { MAX_DELIVERIES } from '../deliveries.js';
 
 /** topic → (group → { handlers, nextIndex }) */
 let bus = new Map();

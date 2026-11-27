@@ -1,0 +1,178 @@
+{
+  "version": 1,
+  "comparatif": "brokers",
+  "date": "2026-11-27T12:00:00Z",
+  "duree_s": 0,
+  "environnement": {
+    "machine": "fixture",
+    "os": "fixture",
+    "cpu": "fixture",
+    "ram_go": 0,
+    "commit": "fixture"
+  },
+  "technos": [
+    { "id": "kafka", "nom": "Kafka", "version": "4.4.0" },
+    { "id": "rabbitmq", "nom": "RabbitMQ", "version": "4.4.1" }
+  ],
+  "mesures": [
+    {
+      "id": "latence_p50",
+      "libelle": "Latence, médiane",
+      "categorie": "Performance",
+      "unite": "ms",
+      "meilleur": "bas",
+      "repetitions": 5,
+      "valeurs": {
+        "kafka": { "mediane": 0, "min": 0, "max": 0 },
+        "rabbitmq": { "mediane": 0, "min": 0, "max": 0 }
+      }
+    },
+    {
+      "id": "latence_p95",
+      "libelle": "Latence, p95",
+      "categorie": "Performance",
+      "unite": "ms",
+      "meilleur": "bas",
+      "repetitions": 5,
+      "valeurs": {
+        "kafka": { "mediane": 0, "min": 0, "max": 0 },
+        "rabbitmq": { "mediane": 0, "min": 0, "max": 0 }
+      }
+    },
+    {
+      "id": "debit_envoi",
+      "libelle": "Débit d'envoi",
+      "categorie": "Performance",
+      "unite": "msg/s",
+      "meilleur": "haut",
+      "repetitions": 5,
+      "valeurs": {
+        "kafka": { "mediane": 0, "min": 0, "max": 0 },
+        "rabbitmq": { "mediane": 0, "min": 0, "max": 0 }
+      }
+    },
+    {
+      "id": "debit_bout_en_bout",
+      "libelle": "Débit de bout en bout",
+      "categorie": "Performance",
+      "unite": "msg/s",
+      "meilleur": "haut",
+      "repetitions": 5,
+      "valeurs": {
+        "kafka": { "mediane": 0, "min": 0, "max": 0 },
+        "rabbitmq": { "mediane": 0, "min": 0, "max": 0 }
+      }
+    },
+    {
+      "id": "demarrage",
+      "libelle": "Démarrage jusqu'à « prêt »",
+      "categorie": "Exploitation",
+      "unite": "s",
+      "meilleur": "bas",
+      "repetitions": 5,
+      "valeurs": {
+        "kafka": { "mediane": 0, "min": 0, "max": 0 },
+        "rabbitmq": { "mediane": 0, "min": 0, "max": 0 }
+      }
+    },
+    {
+      "id": "memoire_repos",
+      "libelle": "Mémoire au repos",
+      "categorie": "Ressources",
+      "unite": "Mo",
+      "meilleur": "bas",
+      "repetitions": 5,
+      "valeurs": {
+        "kafka": { "mediane": 0, "min": 0, "max": 0 },
+        "rabbitmq": { "mediane": 0, "min": 0, "max": 0 }
+      }
+    },
+    {
+      "id": "memoire_charge",
+      "libelle": "Mémoire en charge",
+      "categorie": "Ressources",
+      "unite": "Mo",
+      "meilleur": "bas",
+      "repetitions": 5,
+      "valeurs": {
+        "kafka": { "mediane": 0, "min": 0, "max": 0 },
+        "rabbitmq": { "mediane": 0, "min": 0, "max": 0 }
+      }
+    },
+    {
+      "id": "cpu_charge",
+      "libelle": "CPU en charge",
+      "categorie": "Ressources",
+      "unite": "%",
+      "meilleur": "bas",
+      "repetitions": 5,
+      "valeurs": {
+        "kafka": { "mediane": 0, "min": 0, "max": 0 },
+        "rabbitmq": { "mediane": 0, "min": 0, "max": 0 }
+      }
+    }
+  ],
+  "scenarios": [
+    {
+      "id": "ordre_multi_consommateurs",
+      "libelle": "Ordre avec 3 consommateurs du même groupe",
+      "categorie": "Fiabilité",
+      "attendu": "Messages d'un même membre traités dans l'ordre",
+      "resultats": {
+        "kafka": { "statut": "NA", "constat": "Fixture : pas encore mesuré", "valeur": 0, "unite": "messages hors ordre" },
+        "rabbitmq": { "statut": "NA", "constat": "Fixture : pas encore mesuré", "valeur": 0, "unite": "messages hors ordre" }
+      }
+    },
+    {
+      "id": "ordre_rejet",
+      "libelle": "Ordre quand 1 message sur 10 est rejeté puis redistribué",
+      "categorie": "Fiabilité",
+      "attendu": "Ordre conservé, aucune perte",
+      "resultats": {
+        "kafka": { "statut": "NA", "constat": "Fixture : pas encore mesuré", "valeur": 0, "unite": "messages hors ordre" },
+        "rabbitmq": { "statut": "NA", "constat": "Fixture : pas encore mesuré", "valeur": 0, "unite": "messages hors ordre" }
+      }
+    },
+    {
+      "id": "panne_broker_defaut",
+      "libelle": "Broker tué en plein envoi, réglages par défaut",
+      "categorie": "Fiabilité",
+      "attendu": "Ni perte ni doublon",
+      "resultats": {
+        "kafka": { "statut": "NA", "constat": "Fixture : pas encore mesuré", "valeur": 0, "unite": "messages perdus" },
+        "rabbitmq": { "statut": "NA", "constat": "Fixture : pas encore mesuré", "valeur": 0, "unite": "messages perdus" }
+      }
+    },
+    {
+      "id": "panne_broker_securise",
+      "libelle": "Broker tué en plein envoi, réglages sécurisés",
+      "categorie": "Fiabilité",
+      "attendu": "Ni perte ni doublon",
+      "resultats": {
+        "kafka": { "statut": "NA", "constat": "Fixture : pas encore mesuré", "valeur": 0, "unite": "messages perdus" },
+        "rabbitmq": { "statut": "NA", "constat": "Fixture : pas encore mesuré", "valeur": 0, "unite": "messages perdus" }
+      }
+    },
+    {
+      "id": "panne_consommateur",
+      "libelle": "Consommateur tué avant d'acquitter",
+      "categorie": "Fiabilité",
+      "attendu": "Message redistribué, ni perdu ni en double",
+      "resultats": {
+        "kafka": { "statut": "NA", "constat": "Fixture : pas encore mesuré", "valeur": 0, "unite": "messages perdus" },
+        "rabbitmq": { "statut": "NA", "constat": "Fixture : pas encore mesuré", "valeur": 0, "unite": "messages perdus" }
+      }
+    },
+    {
+      "id": "relecture",
+      "libelle": "Nouveau groupe abonné après coup",
+      "categorie": "Exploitation",
+      "attendu": "Il peut relire l'historique",
+      "resultats": {
+        "kafka": { "statut": "NA", "constat": "Fixture : pas encore mesuré", "valeur": 0, "unite": "messages relus" },
+        "rabbitmq": { "statut": "NA", "constat": "Fixture : pas encore mesuré", "valeur": 0, "unite": "messages relus" }
+      }
+    }
+  ],
+  "erreurs": []
+}
