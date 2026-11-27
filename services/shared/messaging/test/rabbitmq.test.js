@@ -9,8 +9,7 @@ const URL = process.env.RABBITMQ_URL ?? 'amqp://guest:guest@localhost:5672';
 const MANAGEMENT_URL = 'http://localhost:15672/api';
 const FAST_RECOVERY = { initialDelay: 100, maxDelay: 200, maxRetries: 20 };
 
-// Integration tests only run when a broker answers (docker compose -f infra/brokers/compose.yml
-// up -d rabbitmq); in CI there is none, so they are skipped instead of failing.
+// Skipped, not failed, when no broker answers (as in CI).
 const brokerUp = await isReachable('localhost', 5672);
 
 describe('rabbitmq adapter without a broker', () => {
@@ -175,8 +174,8 @@ describe.skipIf(!brokerUp)('rabbitmq adapter against a real broker', () => {
   });
 
   it('reconnects and resumes after the broker drops the connections', async () => {
-    // The management API lists connections with a few seconds of delay: start from a
-    // clean slate so that only this test's two connections get dropped.
+    // The management API lists connections a few seconds late: wait for a clean slate so
+    // that only this test's two connections get dropped.
     await vi.waitFor(async () => expect(await ownConnections()).toHaveLength(0), WAIT);
     const topic = newTopic();
     const handler = vi.fn();
@@ -202,7 +201,6 @@ describe.skipIf(!brokerUp)('rabbitmq adapter against a real broker', () => {
 
 const WAIT = { timeout: 15_000, interval: 250 };
 
-/** Connections opened by this test process, as listed by the RabbitMQ management API. */
 async function ownConnections() {
   const connections = await (await management('/connections')).json();
   return connections.filter((c) =>

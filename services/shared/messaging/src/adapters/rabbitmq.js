@@ -1,25 +1,15 @@
-/**
- * `rabbitmq` adapter (amqplib).
- * Same semantics as the other adapters (see docs/lots/lot-4-brokers.md, part A):
- *   - one durable `topic` exchange per topic (`offers`);
- *   - one durable queue per group (`offers.<group>`) bound to it with `#`:
- *     same group = competing consumers on one queue, different groups = one copy each;
- *   - a handler that throws gets its message nacked and requeued (redelivery), at most
- *     MAX_DELIVERIES times; then the message goes to `offers.<group>.rejets`.
- *
- * Reconnection uses amqplib's own recovery (opt-in since amqplib 1.1): we test the client
- * the way it would run in production instead of hand-written retry code.
- */
+/** `rabbitmq` adapter (amqplib). Topology, settings and behaviour: see this module's README. */
 import amqp from 'amqplib';
 import { MAX_DELIVERIES } from '../deliveries.js';
 
 const DEFAULT_URL = 'amqp://guest:guest@localhost:5672';
 
-// 1 s, 2 s, 4 s, 8 s, 8 s: about 23 s of retries, enough to outlive the benchmark's
-// 10 s broker outage plus RabbitMQ's boot time. No jitter, so runs stay reproducible.
+// amqplib's own recovery, as in production: 1, 2, 4, 8, 8 s (about 23 s) outlives the
+// benchmark's 10 s outage plus the broker's boot. No jitter, so runs stay reproducible.
 const RECOVERY_POLICY = { initialDelay: 1000, factor: 2, maxDelay: 8000, jitter: 0, maxRetries: 5 };
 
 /**
+ * Creates a publisher on RabbitMQ.
  * @param {object} [options]
  * @param {string} [options.url] AMQP URL (defaults to RABBITMQ_URL).
  * @param {boolean} [options.secure] Confirm channel + persistent messages.
@@ -27,8 +17,7 @@ const RECOVERY_POLICY = { initialDelay: 1000, factor: 2, maxDelay: 8000, jitter:
  * @returns {Promise<{ publish: Function, close: Function }>}
  */
 export async function createRabbitPublisher({ url, secure = false, recovery } = {}) {
-  // Exchanges are declared lazily, once per channel: a new channel after a reconnection
-  // declares them again (cheap, and safe if the broker lost them).
+  // Cleared on each reconnection: a restarted broker may have lost the exchanges.
   const declared = new Set();
   const link = await openChannel({
     url,
@@ -40,8 +29,7 @@ export async function createRabbitPublisher({ url, secure = false, recovery } = 
 
   return {
     async publish(topic, message, { key = '' } = {}) {
-      // While disconnected this waits for the reconnection (or rejects once recovery gives up),
-      // so callers such as Troc see a slow or failed publish, never a silent drop.
+      // Waits during a reconnection: callers see a slow or failed publish, never a silent drop.
       const channel = await link.channel();
       if (!declared.has(topic)) {
         await channel.assertExchange(topic, 'topic', { durable: true });
@@ -60,6 +48,7 @@ export async function createRabbitPublisher({ url, secure = false, recovery } = 
 }
 
 /**
+ * Creates a subscriber on RabbitMQ.
  * @param {object} options
  * @param {string} options.group Consumer group: the queue is `<topic>.<group>`.
  * @param {string} [options.url] AMQP URL (defaults to RABBITMQ_URL).
@@ -74,8 +63,7 @@ export async function createRabbitSubscriber({ url, group, prefetch, recovery } 
     recovery,
     confirm: false,
     role: `subscriber/${group}`,
-    // Runs after every (re)connection: consumers live on a channel, so they must be
-    // registered again on the new one.
+    // Consumers live on a channel: register them again after each reconnection.
     prepare: async (channel) => {
       if (prefetch) await channel.prefetch(prefetch);
       for (const subscription of subscriptions) await consume(channel, group, subscription);
@@ -92,11 +80,7 @@ export async function createRabbitSubscriber({ url, group, prefetch, recovery } 
   };
 }
 
-/**
- * Opens a recovering connection and keeps one usable channel on it.
- * `channel()` resolves to the current channel, waits during a reconnection,
- * and rejects once amqplib gives up.
- */
+/** `channel()`: the live channel; waits while reconnecting, rejects once recovery gives up. */
 async function openChannel({
   url = process.env.RABBITMQ_URL ?? DEFAULT_URL,
   recovery,
@@ -112,14 +96,14 @@ async function openChannel({
       resolveReady = resolve;
       rejectReady = reject;
     });
-    ready.catch(() => {}); // rejection is reported to the next caller, not as unhandled
+    ready.catch(() => {}); // reported to the next caller, not as an unhandled rejection
   };
   resetReady();
 
   let connection;
   try {
     connection = await amqp.connect(url, {
-      // Shown in the RabbitMQ console (Connections tab): tells services and tests apart.
+      // Visible in the RabbitMQ console; the tests rely on it to drop their own connections.
       clientProperties: { connection_name: `maison-epouvante/${role} (pid ${process.pid})` },
       recovery: {
         ...RECOVERY_POLICY,
@@ -129,8 +113,7 @@ async function openChannel({
           const channel = confirm
             ? await model.createConfirmChannel()
             : await model.createChannel();
-          // Without a listener, a channel error would crash the process.
-          channel.on('error', () => {});
+          channel.on('error', () => {}); // without a listener, a channel error kills the process
           await prepare(channel);
           resolve(channel);
         },
@@ -141,8 +124,7 @@ async function openChannel({
     throw new Error(`RabbitMQ unreachable (${role}): ${error.message}`, { cause: error });
   }
 
-  // `error` is followed by `disconnect` and recovery takes over; without a listener the
-  // process would exit even though amqplib is about to reconnect.
+  // Required even with recovery: without it the process exits before amqplib reconnects.
   connection.on('error', () => {});
   connection.on('disconnect', resetReady);
   connection.on('reconnect-failed', (error) => {
@@ -155,14 +137,12 @@ async function openChannel({
   };
 }
 
-/** Declares the topology of a group, then consumes its queue one message at a time. */
 async function consume(channel, group, { topic, handler }) {
   const queue = `${topic}.${group}`;
   const rejects = `${queue}.rejets`;
   await channel.assertExchange(topic, 'topic', { durable: true });
   await channel.assertQueue(rejects, { durable: true });
-  // A message nacked without requeue is moved to `rejects` (through the default exchange)
-  // instead of being lost: it can be inspected in the console and replayed by hand.
+  // Dead letter: a message nacked without requeue lands in `rejects` instead of being lost.
   await channel.assertQueue(queue, {
     durable: true,
     deadLetterExchange: '',
@@ -170,14 +150,12 @@ async function consume(channel, group, { topic, handler }) {
   });
   await channel.bindQueue(queue, topic, '#');
 
-  // Classic queues do not count deliveries, so a handler that always fails would get the
-  // same message forever: the adapter counts the attempts itself. The count lives in this
-  // process, so with competing consumers in several processes the limit applies to each.
+  // Classic queues do not count deliveries, so we do. Per process: with competing consumers
+  // in several processes, each one may make its MAX_DELIVERIES attempts.
   const attempts = new Map();
 
-  // amqplib does not wait for an async callback: chaining keeps one message in progress per
-  // subscriber, like Kafka's eachMessage. Any disorder the benchmark measures then comes
-  // from the broker and the competing consumers, not from this adapter.
+  // amqplib does not await the callback: chaining handles one message at a time, like Kafka,
+  // so any disorder the benchmark measures comes from the broker, not from this adapter.
   let tail = Promise.resolve();
   await channel.consume(queue, (delivery) => {
     if (delivery === null) return; // consumer cancelled by the broker (queue deleted)
@@ -191,7 +169,7 @@ async function handleDelivery(channel, delivery, handler, { attempts, rejects })
   try {
     event = JSON.parse(content);
   } catch (error) {
-    // Requeuing a message that can never be parsed would loop forever: set it aside at once.
+    // Can never be parsed: retrying is pointless.
     console.error(`[messaging:rabbitmq] invalid JSON moved to ${rejects}:`, error.message);
     return settle(() => channel.nack(delivery, false, false));
   }
@@ -217,12 +195,11 @@ async function handleDelivery(channel, delivery, handler, { attempts, rejects })
   }
 }
 
-/** Ack/nack on a channel closed meanwhile throws; the broker redelivers the message anyway. */
 function settle(acknowledge) {
   try {
     acknowledge();
   } catch {
-    // Redelivered after the reconnection: the consumer may see it twice (at least once).
+    // Channel closed meanwhile: the broker redelivers the message (at least once).
   }
 }
 
@@ -234,7 +211,7 @@ function publishConfirmed(channel, exchange, key, content, properties) {
   });
 }
 
-/** Waits for the socket buffer to empty (backpressure), or fails if the channel closes. */
+/** Backpressure: waits for the socket buffer to empty (fails if the channel closes). */
 function drained(channel) {
   return new Promise((resolve, reject) => {
     const onDrain = () => {

@@ -15,6 +15,7 @@ import { createMemoryPublisher, createMemorySubscriber } from './adapters/memory
 const BROKERS = ['memory', 'kafka', 'rabbitmq'];
 
 /**
+ * Creates a publisher for the chosen broker.
  * @param {object} [options]
  * @param {'memory'|'kafka'|'rabbitmq'} [options.broker]
  * @param {boolean} [options.secure] Acknowledgements + persistence (Kafka, RabbitMQ).
@@ -32,6 +33,7 @@ export async function createPublisher({
 }
 
 /**
+ * Creates a subscriber for the chosen broker.
  * @param {object} options
  * @param {string} options.group Consumer group (same group = competing consumers).
  * @param {'memory'|'kafka'|'rabbitmq'} [options.broker]
