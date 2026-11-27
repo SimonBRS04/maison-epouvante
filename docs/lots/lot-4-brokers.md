@@ -40,7 +40,7 @@ Ton comparatif compte pour la démonstration « 2 technologies pour l'applicatio
 - [x] **J2 — `services/shared/messaging` avec l'adaptateur `memory`**, et l'interface définitive. _Livré dans le squelette._
 - [ ] **J2 — Fixture** `fixtures/brokers.json`.
 - [x] **J2-J3 — Service Notifications**, testé, avec son Dockerfile. _Livré dans le squelette : à toi de le faire évoluer._
-- [ ] **J3 — Adaptateurs `kafka` et `rabbitmq`**, avec reconnexion.
+- [ ] **J3 — Adaptateurs `kafka` et `rabbitmq`**, avec reconnexion. Inclut un `npm ci` et un envoi Kafka **sur le PC de démo Windows** (voir « Décisions du lot »).
 - [ ] **J4 — Banc `bench/brokers`**, premier lancement officiel.
 - [ ] **J5 — Tableau forces / faiblesses / limites**, second lancement officiel, vidéo de démo.
 - [ ] **Soutenance.** Schéma de l'orchestrateur Kubernetes, attributs qualité, métiers et interactions.
@@ -94,9 +94,9 @@ Options facultatives, utilisées surtout par le banc :
 
 Conseils :
 
-- Bibliothèques : `kafkajs` (simple, très documentée, mais plus maintenue activement : limite à citer) et `amqplib`.
-- **Reconnexion** : `kafkajs` réessaie tout seul ; `amqplib` non, la connexion perdue est perdue. Écris une reconnexion avec attente progressive (1 s, 2 s, 4 s… pendant 30 s au plus) dans l'adaptateur RabbitMQ, sinon la comparaison des pannes est faussée. Documente ce comportement : c'est un constat en soi (la bibliothèque cliente compte autant que le broker).
-- **Valeurs par défaut** : les bibliothèques n'ont pas les mêmes. `kafkajs` attend par exemple déjà l'accusé de tous les réplicas par défaut. Note dans le README du banc les réglages exacts de chaque mode.
+- Bibliothèques : `@confluentinc/kafka-javascript` (client officiel de Confluent, API compatible `kafkajs`) et `amqplib`. **Choix revu le 2026-11-27** : on n'utilise plus `kafkajs`. Pourquoi, et ce que ça change : voir [« Décisions du lot »](#décisions-du-lot).
+- **Reconnexion** : le client Kafka réessaie tout seul ; `amqplib` non, la connexion perdue est perdue. Écris une reconnexion avec attente progressive (1 s, 2 s, 4 s… pendant 30 s au plus) dans l'adaptateur RabbitMQ, sinon la comparaison des pannes est faussée. Documente ce comportement : c'est un constat en soi (la bibliothèque cliente compte autant que le broker).
+- **Valeurs par défaut** : les bibliothèques n'ont pas les mêmes. Côté Kafka, ce sont celles de `librdkafka` (la bibliothèque C du client Confluent) : `acks` vaut par exemple déjà « tous les réplicas » par défaut, mais le producteur n'est pas idempotent. Note dans le README du banc les réglages exacts de chaque mode.
 - Messages en JSON (`Buffer.from(JSON.stringify(event))`).
 - Tests Vitest sur l'adaptateur `memory`, plus un test d'intégration par vrai broker (lancé seulement si le broker répond, sinon ignoré).
 
@@ -126,7 +126,7 @@ Il prévient les membres quand un article lié à leurs centres d'intérêt est 
   - RabbitMQ : image `rabbitmq:<version>-management`, console sur le port 15672.
 - Ressources : `cpus: "2"`, `mem_limit: 2g` pour chacun.
 - **Piège n°1, les _listeners_ Kafka** : le banc tourne sur l'hôte, les services dans des conteneurs. Il faut deux listeners annoncés : `localhost:9092` pour l'hôte, `kafka:29092` pour le réseau Docker. Sans ça, le client se connecte puis échoue mystérieusement.
-- Le topic `offers` (3 partitions) est créé par le banc au démarrage, avec le client d'administration de `kafkajs`. Ne compte pas sur la création automatique.
+- Le topic `offers` (3 partitions) est créé par le banc au démarrage, avec le client d'administration du client Kafka (`admin.createTopics`). Ne compte pas sur la création automatique.
 - Un seul nœud chacun. Limite à citer : la réplication entre nœuds n'est pas testée.
 
 ### Protocole
@@ -168,6 +168,44 @@ Il prévient les membres quand un article lié à leurs centres d'intérêt est 
 **Hypothèses de départ**, à écrire dans le README et à confirmer ou démentir par les mesures : Kafka offre plus de débit ; RabbitMQ a moins de latence à faible charge ; RabbitMQ perd l'ordre avec plusieurs consommateurs ; Kafka garde l'ordre par clé, mais un seul consommateur travaille alors. Un résultat qui contredit une hypothèse se présente tel quel à l'oral.
 
 **Nuance à citer** dans le tableau comparatif : RabbitMQ propose aussi des _Streams_ qui permettent la relecture. On teste les files classiques, l'usage le plus courant.
+
+---
+
+## Décisions du lot
+
+Les choix qui s'écartent de ce fichier, avec leur raison, pour que toute l'équipe sache pourquoi le code ne suit pas le conseil d'origine.
+
+### 2026-11-27 — Client Kafka : `@confluentinc/kafka-javascript` au lieu de `kafkajs`
+
+**Le problème.** Ce fichier conseillait `kafkajs`. Sa dernière version (2.2.4) date de février 2023 : la bibliothèque n'est plus maintenue.
+
+**L'argument qui a tranché.** Le banc ne mesure jamais « Kafka » seul, mais **le broker et sa bibliothèque cliente ensemble**. Mesurer avec `kafkajs` puis recommander un autre client pour la production fausserait la comparaison : nos chiffres décriraient un logiciel que personne ne déploierait. Règle retenue : **chaque broker est testé avec le client qu'on utiliserait en production**.
+
+| Broker   | Client de production             | Pourquoi                                                                        |
+| -------- | -------------------------------- | ------------------------------------------------------------------------------- |
+| RabbitMQ | `amqplib`                        | La référence en Node.js, maintenue                                              |
+| Kafka    | `@confluentinc/kafka-javascript` | Le client officiel de Confluent, maintenu ; `kafkajs` ne l'est plus depuis 2023 |
+
+**Vérifié le 2026-11-27**, avec le Kafka 4.4.0 de `infra/brokers/compose.yml` (création du topic à 3 partitions, producteur idempotent, consommation en groupe) :
+
+- `kafkajs` 2.2.4 fonctionne encore avec Kafka 4.4 ;
+- le client Confluent 1.11.0 fonctionne sous macOS, et s'installe et se charge dans `node:22-alpine` (l'image des Dockerfiles) ;
+- **pas encore testé sous Windows.**
+
+**Ce que ça change.**
+
+- **Installation** : le client embarque `librdkafka` (en C). À chaque `npm ci`, il télécharge depuis GitHub un binaire précompilé pour le système : macOS, Windows x64, Linux et Alpine en ont un. Sans accès à GitHub, il tente une compilation C++, qui échoue dans l'image Alpine.
+- **Poids** : environ 40 Mo installés, contre 1,8 Mo pour `kafkajs`. `messaging` est une dépendance de Troc et de Notifications : **leurs deux images Docker grossissent d'environ 37 Mo**, même quand elles utilisent RabbitMQ.
+- **Pour le Lot 2** : images plus lourdes, builds un peu plus longs, et une bibliothèque C de plus pour Trivy (`scan_images`).
+- **Code** : presque le même que pour `kafkajs`, grâce à l'API compatible. Les options passent dans un bloc `kafkaJS: { … }`, et certaines changent de place (`fromBeginning` à la création du consommateur, plus dans `subscribe()`).
+- **Banc** : les réglages par défaut sont ceux de `librdkafka`, à relever dans `bench/brokers/README.md`. Le client Kafka est écrit en C, `amqplib` en JavaScript : ce n'est pas un biais, c'est ce que la direction aurait en production. À dire tel quel à l'oral.
+
+**Risque et parade.**
+
+- **PC de démo Windows** : `npm ci` et un envoi Kafka à tester dessus **dès le J3**, pas la veille de la soutenance.
+- **Repli** : l'adaptateur est écrit pour que revenir à `kafkajs` se fasse en changeant l'import. Si on doit s'en servir, on le note ici avec la raison, et dans le README du banc.
+
+**Bonus possible pour l'oral** : un lancement de développement avec `kafkajs` chiffrerait l'effet de la bibliothèque cliente sur le débit.
 
 ---
 
