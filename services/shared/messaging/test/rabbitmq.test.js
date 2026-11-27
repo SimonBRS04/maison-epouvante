@@ -151,6 +151,19 @@ describe.skipIf(!brokerUp)('rabbitmq adapter against a real broker', () => {
     await vi.waitFor(() => expect(finished).toEqual([1, 2, 3, 4, 5]));
   });
 
+  it('keeps at most one unacknowledged message per consumer by default', async () => {
+    const topic = newTopic();
+    await subscriber(topic, 'default', vi.fn());
+    await subscriber(topic, 'wider', vi.fn(), { prefetch: 10 });
+
+    await vi.waitFor(async () => {
+      const consumers = await (await management('/consumers')).json();
+      const prefetchOf = (group) =>
+        consumers.find((c) => c.queue.name === `${topic}.${group}`)?.prefetch_count;
+      expect([prefetchOf('default'), prefetchOf('wider')]).toEqual([1, 10]);
+    }, WAIT);
+  });
+
   it('marks messages persistent only in secure mode', async () => {
     const topic = newTopic();
     const probe = await amqp.connect(URL);

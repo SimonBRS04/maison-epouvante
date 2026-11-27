@@ -28,7 +28,7 @@ await subscriber.subscribe('offers', async (event) => {
 | Topologie             | exchange `<topic>` de type `topic`, durable ; file durable `<topic>.<group>` liée avec `#` ; file `<topic>.<group>.rejets` pour les messages mis de côté                                  |
 | Mode par défaut       | canal simple, messages **non persistants** (`deliveryMode: 1`), pas de confirmation du broker                                                                                             |
 | `secure: true`        | canal à confirmations (`publish` attend l'accusé du broker), messages **persistants** (`deliveryMode: 2`)                                                                                 |
-| `prefetch: n`         | `n` messages non acquittés au plus par consommateur ; illimité par défaut                                                                                                                 |
+| `prefetch: n`         | `n` messages non acquittés au plus par consommateur ; **1 par défaut** (sans limite, toute la file part dans la mémoire du service), `0` = sans limite                                    |
 | `fromBeginning`       | sans effet : une file classique ne garde rien de ce qui précède sa création                                                                                                               |
 | Acquittement          | `ack` après le traitement ; erreur du traitement → `nack` avec remise en file, **5 tentatives au plus** (comme l'adaptateur `memory`), puis le message part dans `<topic>.<group>.rejets` |
 | Message JSON invalide | envoyé tout de suite dans `<topic>.<group>.rejets` (il ne pourra jamais être traité), et journalisé                                                                                       |

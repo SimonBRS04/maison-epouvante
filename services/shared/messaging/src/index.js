@@ -38,7 +38,7 @@ export async function createPublisher({
  * @param {string} options.group Consumer group (same group = competing consumers).
  * @param {'memory'|'kafka'|'rabbitmq'} [options.broker]
  * @param {boolean} [options.fromBeginning] Replay the history (Kafka).
- * @param {number} [options.prefetch] Unacknowledged messages per consumer (RabbitMQ).
+ * @param {number} [options.prefetch] Unacknowledged messages per consumer (RabbitMQ, default 1).
  * @returns {Promise<{ subscribe: Function, close: Function }>}
  */
 export async function createSubscriber({

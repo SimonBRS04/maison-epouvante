@@ -52,11 +52,11 @@ export async function createRabbitPublisher({ url, secure = false, recovery } = 
  * @param {object} options
  * @param {string} options.group Consumer group: the queue is `<topic>.<group>`.
  * @param {string} [options.url] AMQP URL (defaults to RABBITMQ_URL).
- * @param {number} [options.prefetch] Unacknowledged messages per consumer (unlimited by default).
+ * @param {number} [options.prefetch] Unacknowledged messages per consumer (1 by default, 0 = no limit).
  * @param {object} [options.recovery] Overrides of the reconnection policy (tests).
  * @returns {Promise<{ subscribe: Function, close: Function }>}
  */
-export async function createRabbitSubscriber({ url, group, prefetch, recovery } = {}) {
+export async function createRabbitSubscriber({ url, group, prefetch = 1, recovery } = {}) {
   const subscriptions = [];
   const link = await openChannel({
     url,
@@ -65,7 +65,9 @@ export async function createRabbitSubscriber({ url, group, prefetch, recovery } 
     role: `subscriber/${group}`,
     // Consumers live on a channel: register them again after each reconnection.
     prepare: async (channel) => {
-      if (prefetch) await channel.prefetch(prefetch);
+      // Without a limit RabbitMQ pushes the whole queue into this process's memory, while
+      // messages are handled one at a time anyway: leave the backlog in the broker.
+      await channel.prefetch(prefetch);
       for (const subscription of subscriptions) await consume(channel, group, subscription);
     },
   });
