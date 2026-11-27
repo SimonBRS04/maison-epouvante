@@ -1,6 +1,6 @@
 # notifications service — build from the repository root (monorepo):
 #   docker build -f services/notifications/Dockerfile -t maison-epouvante-notifications .
-FROM node:22-alpine
+FROM node:24-alpine
 
 WORKDIR /app
 ENV NODE_ENV=production

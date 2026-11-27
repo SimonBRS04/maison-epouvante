@@ -173,7 +173,7 @@ Toutes déclarées dans `.env.example` (commité, valeurs vides ou par défaut).
   ├─ Dockerfile
   └─ package.json
   ```
-- Dockerfile : image `node:22-alpine`, `npm ci --omit=dev`, `USER node` (jamais root), `HEALTHCHECK` sur `/health`.
+- Dockerfile : image `node:24-alpine`, `npm ci --omit=dev`, `USER node` (jamais root), `HEALTHCHECK` sur `/health`.
 - Au moins un test Vitest + Supertest par route, cas d'erreur compris.
 
 ### Événement `offer.created`

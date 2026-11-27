@@ -5,7 +5,7 @@
   "description": "POC « La Petite Maison de l'Épouvante » — comparatifs CI/CD, SSO et brokers (BLOC 3)",
   "type": "module",
   "engines": {
-    "node": ">=22 <23"
+    "node": "24"
   },
   "workspaces": [
     "services/catalogue",
