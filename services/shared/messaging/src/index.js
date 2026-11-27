@@ -8,7 +8,7 @@
  *   const subscriber = await createSubscriber({ broker, group: 'notifications' });
  *   await subscriber.subscribe('offers', async (event) => { ... }); // throwing = redelivery
  *
- * Status: `memory` and `rabbitmq` are implemented; `kafka` is still to come (Lot 4, J3).
+ * Adapters: `memory` (tests, development), `kafka`, `rabbitmq`.
  */
 import { createMemoryPublisher, createMemorySubscriber } from './adapters/memory.js';
 
@@ -28,8 +28,7 @@ export async function createPublisher({
   assertKnownBroker(broker);
   if (broker === 'memory') return createMemoryPublisher(options);
   if (broker === 'rabbitmq') return (await loadRabbit()).createRabbitPublisher(options);
-  // TODO Lot 4 (J3): kafka adapter (@confluentinc/kafka-javascript).
-  throw new Error(`Broker "${broker}": to be implemented by Lot 4.`);
+  return (await loadKafka()).createKafkaPublisher(options);
 }
 
 /**
@@ -37,7 +36,7 @@ export async function createPublisher({
  * @param {object} options
  * @param {string} options.group Consumer group (same group = competing consumers).
  * @param {'memory'|'kafka'|'rabbitmq'} [options.broker]
- * @param {boolean} [options.fromBeginning] Replay the history (Kafka).
+ * @param {boolean} [options.fromBeginning] A new group reads the whole topic (Kafka).
  * @param {number} [options.prefetch] Unacknowledged messages per consumer (RabbitMQ, default 1).
  * @returns {Promise<{ subscribe: Function, close: Function }>}
  */
@@ -51,7 +50,7 @@ export async function createSubscriber({
   if (broker === 'memory') return createMemorySubscriber({ group, ...options });
   if (broker === 'rabbitmq')
     return (await loadRabbit()).createRabbitSubscriber({ group, ...options });
-  throw new Error(`Broker "${broker}": to be implemented by Lot 4.`);
+  return (await loadKafka()).createKafkaSubscriber({ group, ...options });
 }
 
 export { resetMemoryBus } from './adapters/memory.js';
@@ -59,6 +58,10 @@ export { resetMemoryBus } from './adapters/memory.js';
 // Loaded on demand: unit tests and development with BROKER=memory need no broker library.
 function loadRabbit() {
   return import('./adapters/rabbitmq.js');
+}
+
+function loadKafka() {
+  return import('./adapters/kafka.js');
 }
 
 function assertKnownBroker(broker) {
